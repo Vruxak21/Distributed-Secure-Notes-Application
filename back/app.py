@@ -3,7 +3,7 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Boolean, Enum, ForeignKey, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
+import bcrypt
 
 app = Flask(__name__)
 CORS(app, resources={
@@ -24,7 +24,7 @@ class User(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nom: Mapped[str] = mapped_column(unique=True, nullable=False)
-    pswd_hashe: Mapped[str] = mapped_column(nullable=False)
+    pswd_hashed: Mapped[str] = mapped_column(nullable=False)
 
     notes_owned: Mapped[list["Note"]] = relationship("Note", back_populates="owner", cascade="all, delete-orphan")
     permissions: Mapped[list["Permission"]] = relationship("Permission", back_populates="user", cascade="all, delete-orphan")
@@ -66,12 +66,60 @@ class Lock(db.Model):
     note: Mapped[Note] = relationship("Note", back_populates="lock")
 
 
-
 @app.route('/tables')
 def list_tables():
     tables = db.metadata.tables.keys()
     return "Tables available: " + ", ".join(tables)
 
+# ---
+# Login endpoint
+# ---
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json(silent=True) or request.form
+    nom = data.get("username")
+    pswd = data.get("password")
+
+    if not nom or not pswd:
+        return jsonify({"error": "username and password are required"}), 400
+
+    user = User.query.filter_by(nom=nom).first()
+    if user is None or not bcrypt.checkpw(pswd.encode('utf-8'), user.pswd_hashed.encode('utf-8')):
+        return jsonify({"error": "invalid credentials"}), 401
+
+    return jsonify({"message": "login ok"}), 200
+
+    
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.get_json(silent=True) or request.form
+    nom = data.get("username")
+    pswd = data.get("password")
+
+    if not nom or not pswd:
+        return jsonify({"error": "username and password are required"}), 400
+
+    existing = User.query.filter_by(nom=nom).first()
+    if existing is not None:
+        return jsonify({"error": "username already exists"}), 409
+
+    salt = bcrypt.gensalt()
+    pswd_hashed = bcrypt.hashpw(pswd.encode('utf-8'), salt)
+    pswd_string = pswd_hashed.decode('utf-8')
+
+    user = User(
+        nom=nom,
+        pswd_hashed=pswd_string
+    )
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify({"message": "registered ok", "user_id": user.id}), 201
+
+# ---
+# Notes endpoints
+# ---
 
 @app.route('/api/notes/<int:user_id>', methods=['GET'])
 def get_user_notes(user_id):
@@ -200,4 +248,3 @@ with app.app_context():
     db.metadata.create_all(replica_engine)
     
     print("Master and Replica databases initialized!")
-
