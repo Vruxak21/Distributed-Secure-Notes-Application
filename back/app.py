@@ -1,10 +1,19 @@
-from flask import Flask
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Boolean, Enum, ForeignKey, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 app = Flask(__name__)
+CORS(app, resources={
+    r"/api/*": {
+        "origins": ["http://localhost:3000"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True  #Pour les cookies/sessions
+    }
+})
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///master.db'
 app.config['SQLALCHEMY_BINDS'] = {'replica': 'sqlite:///replica.db'}
 
@@ -62,6 +71,123 @@ class Lock(db.Model):
 def list_tables():
     tables = db.metadata.tables.keys()
     return "Tables available: " + ", ".join(tables)
+
+
+@app.route('/api/notes/<int:user_id>', methods=['GET'])
+def get_user_notes(user_id):
+    """Récupère toutes les notes d'un utilisateur (owned + shared)"""
+    try:
+        # Notes appartenant à l'utilisateur
+        owned_notes = Note.query.filter_by(owner_id=user_id).all()
+        
+        # Notes partagées avec l'utilisateur
+        shared_permissions = Permission.query.filter_by(user_id=user_id).all()
+        shared_note_ids = [p.note_id for p in shared_permissions]
+        shared_notes = Note.query.filter(Note.id.in_(shared_note_ids)).all() if shared_note_ids else []
+        
+        notes_data = []
+        
+        # on formate les notes owned
+        for note in owned_notes:
+            notes_data.append({
+                'id': note.id,
+                'title': note.title,
+                'content': note.content,
+                'created_at': note.created_at,
+                'updated_at': note.updated_at,
+                'is_owner': True,
+                'access_level': 'write',
+                'owner_name': note.owner.nom
+            })
+        
+        # on formate les notes partagées
+        for note in shared_notes:
+            permission = next(p for p in shared_permissions if p.note_id == note.id)
+            notes_data.append({
+                'id': note.id,
+                'title': note.title,
+                'content': note.content,
+                'created_at': note.created_at,
+                'updated_at': note.updated_at,
+                'is_owner': False,
+                'access_level': permission.access,
+                'owner_name': note.owner.nom
+            })
+        
+        return jsonify({
+            'success': True,
+            'notes': notes_data
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/note/<int:note_id>', methods=['GET'])
+def get_note_detail(note_id):
+    """Récupère les détails d'une note spécifique"""
+    try:
+        user_id = request.args.get('user_id', type=int)
+        
+        if not user_id:
+            return jsonify({
+                'success': False,
+                'error': 'user_id parameter is required'
+            }), 400
+        
+        note = Note.query.get(note_id)
+        
+        if not note:
+            return jsonify({
+                'success': False,
+                'error': 'Note not found'
+            }), 404
+        
+        # on vérifie les permissions
+        is_owner = note.owner_id == user_id
+        permission = Permission.query.filter_by(note_id=note_id, user_id=user_id).first()
+        
+        if not is_owner and not permission:
+            return jsonify({
+                'success': False,
+                'error': 'Access denied'
+            }), 403
+        
+        # on vérifie le lock
+        lock_info = None
+        if note.lock:
+            lock_info = {
+                'is_locked': note.lock.locked,
+                'locked_by_user_id': note.lock.user_id
+            }
+        
+        return jsonify({
+            'success': True,
+            'note': {
+                'id': note.id,
+                'title': note.title,
+                'content': note.content,
+                'created_at': note.created_at,
+                'updated_at': note.updated_at,
+                'is_owner': is_owner,
+                'access_level': 'write' if is_owner else permission.access,
+                'owner_name': note.owner.nom,
+                'lock': lock_info
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
 
 
 with app.app_context():
