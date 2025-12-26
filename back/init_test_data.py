@@ -7,11 +7,11 @@ def init_test_data():
         # Créer des utilisateurs de test
         user1 = User(
             nom="Alice",
-            pswd_hashe=generate_password_hash("password123")
+            pswd_hashed=generate_password_hash("password123")
         )
         user2 = User(
             nom="Bob",
-            pswd_hashe=generate_password_hash("password456")
+            pswd_hashed=generate_password_hash("password456")
         )
         
         db.session.add(user1)
@@ -77,10 +77,10 @@ def init_test_data():
         # Ajouter les utilisateurs à la replica
         with replica_engine.connect() as conn:
             conn.execute(db.text(
-                "INSERT INTO users (id, nom, pswd_hashe) VALUES (:id, :nom, :pswd)"
+                "INSERT INTO users (id, nom, pswd_hashed) VALUES (:id, :nom, :pswd)"
             ), [
-                {"id": user1.id, "nom": user1.nom, "pswd": user1.pswd_hashe},
-                {"id": user2.id, "nom": user2.nom, "pswd": user2.pswd_hashe}
+                {"id": user1.id, "nom": user1.nom, "pswd": user1.pswd_hashed},
+                {"id": user2.id, "nom": user2.nom, "pswd": user2.pswd_hashed}
             ])
             
             # Ajouter les notes à la replica
