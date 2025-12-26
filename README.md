@@ -1,6 +1,7 @@
-Inside the [back](./back) folder you need to type:
-
+Installation Instructions
+=========================
 ```
-python -m venv .venv
+cd back
 .venv\Scripts\activate
+pip install -r requirements.txt
 ```
