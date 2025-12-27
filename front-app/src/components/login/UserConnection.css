@@ -1,0 +1,32 @@
+.user-connection-container {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 20px;
+}
+
+.user-connection-container .user-connection-link {
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.user-connection-container .user-connection-link:nth-child(2) {
+    background-color: #4CAF50;
+}
+
+.user-connection-container .user-connection-link:nth-child(2):hover {
+    background-color: #45a049;
+}
+
+.user-connection-container .user-connection-link:nth-child(1) {
+    background-color: #5a67d8;
+}
+
+.user-connection-container .user-connection-link:nth-child(1):hover {
+    background-color: #4c51bf;
+}

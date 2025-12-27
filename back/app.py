@@ -4,8 +4,11 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Boolean, Enum, ForeignKey, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import bcrypt
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+import datetime
 
 app = Flask(__name__)
+# Cors 
 CORS(app, resources={
     r"/api/*": {
         "origins": ["http://localhost:3000"],
@@ -14,10 +17,20 @@ CORS(app, resources={
         "supports_credentials": True  #Pour les cookies/sessions
     }
 })
+
+# Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///master.db'
 app.config['SQLALCHEMY_BINDS'] = {'replica': 'sqlite:///replica.db'}
-
 db = SQLAlchemy(app)
+
+# JWT configuration
+app.config['JWT_SECRET_KEY'] = 'xin-jojo-dome-island-party'  
+delta_time = 60 * 60 # Durée de validité du token en secondes
+jwt = JWTManager(app)
+
+# ---
+# Models
+# ---
 
 class User(db.Model):
     __tablename__ = "users"
@@ -65,17 +78,11 @@ class Lock(db.Model):
 
     note: Mapped[Note] = relationship("Note", back_populates="lock")
 
-
-@app.route('/tables')
-def list_tables():
-    tables = db.metadata.tables.keys()
-    return "Tables available: " + ", ".join(tables)
-
 # ---
 # Login endpoint
 # ---
 
-@app.route('/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json(silent=True) or request.form
     nom = data.get("username")
@@ -88,10 +95,11 @@ def login():
     if user is None or not bcrypt.checkpw(pswd.encode('utf-8'), user.pswd_hashed.encode('utf-8')):
         return jsonify({"error": "invalid credentials"}), 401
 
-    return jsonify({"message": "login ok"}), 200
+    access_token = create_access_token(identity=user.id, expires_delta=datetime.timedelta(seconds=delta_time))
+    return jsonify(access_token=access_token), 200
 
     
-@app.route('/register', methods=['POST'])
+@app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json(silent=True) or request.form
     nom = data.get("username")
@@ -115,7 +123,16 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    return jsonify({"message": "registered ok", "user_id": user.id}), 201
+    access_token = create_access_token(identity=str(user.id), expires_delta=datetime.timedelta(seconds=delta_time))
+
+    return jsonify(access_token=access_token), 201
+
+@app.route('/api/protected', methods=['GET'])
+@jwt_required()
+def protected():
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+    return jsonify(logged_in_as=user.nom), 200
 
 # ---
 # Notes endpoints
