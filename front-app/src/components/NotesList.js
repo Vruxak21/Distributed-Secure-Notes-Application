@@ -14,7 +14,7 @@ const NotesList = ({ userId, onSelectNote }) => {
     const fetchNotes = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`http://localhost:5000/api/notes/${userId}`);
+            const response = await fetch(`http://localhost:5000/api/users/${userId}/notes`);
             const data = await response.json();
 
             if (data.success) {
@@ -42,8 +42,8 @@ const NotesList = ({ userId, onSelectNote }) => {
             return <span className="badge badge-owner">Propriétaire</span>;
         }
         return (
-            <span className={`badge badge-${note.access_level}`}>
-                {note.access_level === 'read' ? 'Lecture seule' : 'Lecture/Écriture'}
+            <span className={`badge badge-${note.visibility}`}>
+                {note.visibility === 'read' ? 'Lecture seule' : 'Lecture/Écriture '}
             </span>
         );
     };
