@@ -1,0 +1,43 @@
+from models import db
+from models.note import Note
+
+class NoteService:
+	@staticmethod
+	def can_read(note: Note, user_id: int | None) -> bool:
+		if user_id is not None and note.owner_id == user_id:
+			return True
+		return note.visibility in ("read", "write")
+
+	@staticmethod
+	def can_write(note: Note, user_id: int | None) -> bool:
+		if user_id is not None and note.owner_id == user_id:
+			return True
+		return note.visibility == "write"
+
+	@staticmethod
+	def create_note(owner_id: int, title: str, content: str = "", visibility: str = "private") -> Note:
+		note = Note(owner_id=owner_id, title=title, content=content, visibility=visibility)
+		db.session.add(note)
+		db.session.commit()
+		return note
+
+	@staticmethod
+	def get_user_notes(user_id: int):
+		return Note.query.filter_by(owner_id=user_id).all()
+
+	@staticmethod
+	def get_shared_public_notes(user_id: int):
+		return (
+			Note.query
+			.filter(
+				Note.owner_id != user_id,
+				Note.visibility.in_(["read", "write"])
+			)
+			.all()
+		)
+	
+
+	
+	@staticmethod
+	def get_note(note_id:int):
+		return Note.query.filter_by(id=note_id).first()
