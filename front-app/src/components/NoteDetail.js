@@ -15,7 +15,7 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
     const fetchNoteDetail = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`http://localhost:5000/api/note/${noteId}?user_id=${userId}`);
+            const response = await fetch(`http://localhost:5000/api/notes/${noteId}?user_id=${userId}`);
             const data = await response.json();
 
             if (data.success) {
