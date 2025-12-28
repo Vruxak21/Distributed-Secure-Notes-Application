@@ -6,6 +6,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 import bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 import datetime
+import os
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement depuis le fichier .env
+load_dotenv()
 
 app = Flask(__name__)
 # Cors 
@@ -24,7 +29,7 @@ app.config['SQLALCHEMY_BINDS'] = {'replica': 'sqlite:///replica.db'}
 db = SQLAlchemy(app)
 
 # JWT configuration
-app.config['JWT_SECRET_KEY'] = 'xin-jojo-dome-island-party'  
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'dev-secret-key-CHANGE-IN-PRODUCTION')  
 delta_time = 60 * 60 # Durée de validité du token en secondes
 jwt = JWTManager(app)
 
@@ -138,10 +143,14 @@ def protected():
 # Notes endpoints
 # ---
 
-@app.route('/api/notes/<int:user_id>', methods=['GET'])
-def get_user_notes(user_id):
+@app.route('/api/notes', methods=['GET'])
+@jwt_required()
+def get_user_notes():
     """Récupère toutes les notes d'un utilisateur (owned + shared)"""
     try:
+        # Récupérer l'ID de l'utilisateur authentifié depuis le JWT
+        user_id = int(get_jwt_identity())
+        
         # Notes appartenant à l'utilisateur
         owned_notes = Note.query.filter_by(owner_id=user_id).all()
         
@@ -192,16 +201,12 @@ def get_user_notes(user_id):
 
 
 @app.route('/api/note/<int:note_id>', methods=['GET'])
+@jwt_required()
 def get_note_detail(note_id):
     """Récupère les détails d'une note spécifique"""
     try:
-        user_id = request.args.get('user_id', type=int)
-        
-        if not user_id:
-            return jsonify({
-                'success': False,
-                'error': 'user_id parameter is required'
-            }), 400
+        # Récupérer l'ID de l'utilisateur authentifié depuis le JWT
+        user_id = int(get_jwt_identity())
         
         note = Note.query.get(note_id)
         
