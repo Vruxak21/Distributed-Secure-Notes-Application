@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Boolean, Enum, ForeignKey, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import bcrypt
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, set_access_cookies
 import datetime
 
 app = Flask(__name__)
@@ -25,6 +25,12 @@ db = SQLAlchemy(app)
 
 # JWT configuration
 app.config['JWT_SECRET_KEY'] = 'xin-jojo-dome-island-party'  
+app.config.update({
+    "JWT_TOKEN_LOCATION": ["cookies"],
+    "JWT_COOKIE_SECURE": False,   
+    "JWT_COOKIE_SAMESITE": "Lax",
+    "JWT_COOKIE_CSRF_PROTECT": False,
+})
 delta_time = 60 * 60 # Durée de validité du token en secondes
 jwt = JWTManager(app)
 
@@ -95,8 +101,10 @@ def login():
     if user is None or not bcrypt.checkpw(pswd.encode('utf-8'), user.pswd_hashed.encode('utf-8')):
         return jsonify({"error": "invalid credentials"}), 401
 
-    access_token = create_access_token(identity=user.id, expires_delta=datetime.timedelta(seconds=delta_time))
-    return jsonify(access_token=access_token), 200
+    access_token = create_access_token(identity=str(user.id), expires_delta=datetime.timedelta(seconds=delta_time))
+    response = jsonify(access_token=access_token)
+    set_access_cookies(response, access_token)
+    return response, 200
 
     
 @app.route('/api/register', methods=['POST'])
@@ -113,26 +121,31 @@ def register():
         return jsonify({"error": "username already exists"}), 409
 
     salt = bcrypt.gensalt()
-    pswd_hashed = bcrypt.hashpw(pswd.encode('utf-8'), salt)
-    pswd_string = pswd_hashed.decode('utf-8')
+    pswd_hashed = bcrypt.hashpw(pswd.encode('utf-8'), salt).decode('utf-8')
 
-    user = User(
-        nom=nom,
-        pswd_hashed=pswd_string
-    )
+    user = User(nom=nom, pswd_hashed=pswd_hashed)
     db.session.add(user)
     db.session.commit()
 
     access_token = create_access_token(identity=str(user.id), expires_delta=datetime.timedelta(seconds=delta_time))
 
-    return jsonify(access_token=access_token), 201
+    response = jsonify(msg="registration successful")
+    set_access_cookies(response, access_token)
+    return response, 201
 
 @app.route('/api/protected', methods=['GET'])
 @jwt_required()
 def protected():
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     user = User.query.get(current_user_id)
     return jsonify(logged_in_as=user.nom), 200
+
+@app.route('/api/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    response = jsonify(msg="logout successful")
+    response.delete_cookie('access_token_cookie')
+    return response, 200
 
 # ---
 # Notes endpoints
