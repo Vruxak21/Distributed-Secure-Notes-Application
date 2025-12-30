@@ -6,8 +6,15 @@ import UserConnection from '../../components/login/UserConnection';
 
 export function Home() {
     // TODO: Matthieu remplacer par l'authentification
-    const [userId] = useState(1); // ID user temp 
+    const [userId, setUserId] = useState(null); // ID user temp 
+    const [username, setUsername] = useState(null)
     const [selectedNoteId, setSelectedNoteId] = useState(null);
+    const handleUserInfoFetched = (userInfo) => {
+        setUserId(userInfo.id);
+        setUsername(userInfo.username);
+        
+    };
+    
 
     const handleSelectNote = (noteId) => {
         setSelectedNoteId(noteId);
@@ -21,10 +28,11 @@ export function Home() {
         <div className="App">
             <header className="App-header">
                 <h1>Notes Sécurisées</h1>
-                <p className="user-info">utilisateur: User #{userId}</p>
+                <p className="user-info">
+                    utilisateur: {username} #{userId}</p>
             </header>
 
-            <div><UserConnection /></div>
+            <div><UserConnection onUserInfoFetched={handleUserInfoFetched}/></div>
 
             <main className="App-main">
                 {selectedNoteId ? (

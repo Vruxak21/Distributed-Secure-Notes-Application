@@ -2,7 +2,7 @@ import './UserConnection.css';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
-export default function UserConnection() {
+export default function UserConnection({onUserInfoFetched}) {
     const [amIConnected, setAmIConnected] = useState(null);
 
     useEffect(() => {
@@ -10,13 +10,18 @@ export default function UserConnection() {
             method: "GET",
             credentials: "include",
         })
-            .then(response => {
+            .then(async response => {
                 setAmIConnected(response.ok);
+                const data = await response.json();
+                onUserInfoFetched?.({
+                    id:data.user_id,
+                    username:data.logged_in_as
+            });
             })
             .catch(() => {
                 setAmIConnected(false);
             });
-    }, []);
+    }, [onUserInfoFetched]);
 
     if (amIConnected === null) {
         return null;
@@ -36,6 +41,7 @@ export default function UserConnection() {
                 console.error("Error during logout:", error);
             });
     };
+
 
 
 

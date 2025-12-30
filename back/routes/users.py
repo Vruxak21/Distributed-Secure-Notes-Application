@@ -36,7 +36,7 @@ def login():
 def protected():
     current_user_id = get_jwt_identity()
     user = UserService.get_user(current_user_id)
-    return jsonify(logged_in_as=user.nom), 200
+    return jsonify(logged_in_as=user.nom,user_id=current_user_id), 200
 
 @users_bp.route('/logout', methods=['POST'])
 @jwt_required()
