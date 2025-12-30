@@ -1,51 +1,61 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import './Home.css';
-import NotesList from '../../components/NotesList';
-import NoteDetail from '../../components/NoteDetail';
+import NotesList from '../../components/notes/list/NotesList';
+import NoteDetail from '../../components/notes/detail/NoteDetail';
+import { NewNoteButton } from '../../components/notes/button/NewNoteButton';
 import UserConnection from '../../components/login/UserConnection';
 
 export function Home() {
-    // TODO: Matthieu remplacer par l'authentification
-    const [userId, setUserId] = useState(null); // ID user temp 
-    const [username, setUsername] = useState(null)
     const [selectedNoteId, setSelectedNoteId] = useState(null);
-    const handleUserInfoFetched = (userInfo) => {
-        setUserId(userInfo.id);
-        setUsername(userInfo.username);
-        
-    };
-    
+    const [userInfo, setUserInfo] = useState(null);
 
-    const handleSelectNote = (noteId) => {
-        setSelectedNoteId(noteId);
-    };
+    const isConnected = !!userInfo;
 
-    const handleBackToList = () => {
-        setSelectedNoteId(null);
-    };
+    const handleUserInfoFetched = useCallback((info) => {
+        if (info) {
+            setUserInfo(info);
+        } else {
+            setUserInfo(null);
+            setSelectedNoteId(null);
+        }
+    }, []);
+
+    const handleSelectNote = (noteId) => setSelectedNoteId(noteId);
+    const handleBackToList = () => setSelectedNoteId(null);
 
     return (
         <div className="App">
             <header className="App-header">
                 <h1>Notes Sécurisées</h1>
                 <p className="user-info">
-                    utilisateur: {username} #{userId}</p>
+                    utilisateur: {userInfo?.username ?? "—"}
+                </p>
             </header>
 
-            <div><UserConnection onUserInfoFetched={handleUserInfoFetched}/></div>
+
+            <div><UserConnection onUserInfoFetched={handleUserInfoFetched}/>
+            </div>
+
 
             <main className="App-main">
-                {selectedNoteId ? (
-                    <NoteDetail
-                        noteId={selectedNoteId}
-                        userId={userId}
-                        onBack={handleBackToList}
-                    />
+
+                {isConnected ? (
+
+                    <NewNoteButton userInfo={userInfo} />,
+                    selectedNoteId ? (
+                        <NoteDetail
+                            noteId={selectedNoteId}
+                            userId={userInfo.id}
+                            onBack={handleBackToList}
+                        />
+                    ) : (
+                        <NotesList
+                            userId={userInfo.id}
+                            onSelectNote={handleSelectNote}
+                        />
+                    )
                 ) : (
-                    <NotesList
-                        userId={userId}
-                        onSelectNote={handleSelectNote}
-                    />
+                    <div>Connecte-toi pour voir tes notes.</div>
                 )}
             </main>
         </div>

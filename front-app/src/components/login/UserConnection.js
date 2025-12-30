@@ -11,16 +11,19 @@ export default function UserConnection({onUserInfoFetched}) {
             credentials: "include",
         })
             .then(async response => {
-                setAmIConnected(response.ok);
+                if (!response.ok) {
+                    setAmIConnected(false);
+                    onUserInfoFetched?.(null);
+                    return;
+                }
                 const data = await response.json();
-                onUserInfoFetched?.({
-                    id:data.user_id,
-                    username:data.logged_in_as
-            });
-            })
-            .catch(() => {
+                setAmIConnected(true);
+                onUserInfoFetched?.({ id: data.user_id, username: data.logged_in_as });
+                })
+                .catch(() => {
                 setAmIConnected(false);
-            });
+                onUserInfoFetched?.(null);
+                });
     }, [onUserInfoFetched]);
 
     if (amIConnected === null) {
