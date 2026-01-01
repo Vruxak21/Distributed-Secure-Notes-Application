@@ -1,7 +1,22 @@
 from flask import Blueprint, jsonify, request
 from services.note_service import NoteService
-
+from services.user_service import UserService
+from flask_jwt_extended import jwt_required, get_jwt_identity
 notes_bp = Blueprint("notes",__name__,url_prefix="/api")
+
+
+def serialize_note(note, is_owner: bool):
+    return {
+        "id": note.id,
+        "title": note.title,
+        "content": note.content,
+        "created_at": note.created_at,
+        "updated_at": note.updated_at,
+        "is_owner": is_owner,
+        "visibility": note.visibility,
+        "owner_name": note.owner.nom,
+    }
+
 
 @notes_bp.route('/users/<int:user_id>/notes', methods=['GET'])
 def get_user_notes(user_id):
@@ -14,31 +29,13 @@ def get_user_notes(user_id):
         shared_notes = NoteService.get_shared_public_notes(user_id=user_id)
         notes_data = []
         
-        # on formate les notes owned
-        for note in owned_notes:
-            notes_data.append({
-                'id': note.id,
-                'title': note.title,
-                'content': note.content,
-                'created_at': note.created_at,
-                'updated_at': note.updated_at,
-                'is_owner': True,
-                'visibility': note.visibility,
-                'owner_name': note.owner.nom
-            })
-        
-        # on formate les notes partagées
-        for note in shared_notes:
-            notes_data.append({
-                'id': note.id,
-                'title': note.title,
-                'content': note.content,
-                'created_at': note.created_at,
-                'updated_at': note.updated_at,
-                'is_owner': False,
-                'visibility': note.visibility,
-                'owner_name': note.owner.nom
-            })
+        notes_data = [
+            serialize_note(note, True)
+            for note in owned_notes
+        ] + [
+            serialize_note(note, False)
+            for note in shared_notes
+        ]
         
         return jsonify({
             'success': True,
@@ -74,8 +71,9 @@ def get_note_detail(note_id):
         
         # on vérifie les permissions
         is_owner = note.owner_id == user_id
-        
-        if not is_owner :
+        can_read_note = NoteService.can_user_read(note.id,user_id)
+
+        if not can_read_note :
             return jsonify({
                 'success': False,
                 'error': 'Access denied'
@@ -92,15 +90,9 @@ def get_note_detail(note_id):
         return jsonify({
             'success': True,
             'note': {
-                'id': note.id,
-                'title': note.title,
-                'content': note.content,
-                'created_at': note.created_at,
-                'updated_at': note.updated_at,
-                'is_owner': is_owner,
+                **serialize_note(note, is_owner),
                 'access_level': 'write' if is_owner else note.visibility,
-                'owner_name': note.owner.nom,
-                'lock': lock_info
+                'lock': lock_info,
             }
         }), 200
         
@@ -109,3 +101,41 @@ def get_note_detail(note_id):
             'success': False,
             'error': str(e)
         }), 500
+    
+
+@notes_bp.route('/notes', methods=["POST"])
+@jwt_required()
+def add_new_note():
+
+    current_user_id = int(get_jwt_identity())  # id du user pas dans la requete
+    data = request.get_json(silent=True) or {}
+
+    # params
+    title = (data.get("title") or "").strip()
+    content = (data.get("content") or "").strip()
+    visibility = (data.get("visibility") or "").strip()
+
+    allowed_visibility = {"private", "read", "write"}
+    if not title or not content or visibility not in allowed_visibility:
+        return jsonify({"error": "invalid note data"}), 400
+
+    try:
+        user = UserService.get_user(user_id=current_user_id)
+        if not user:
+            return jsonify({"error": "invalid user"}), 400
+
+        note = NoteService.create_note(
+            current_user_id,
+            title,
+            content,
+            visibility)
+        if not note:
+            return jsonify({"error": "invalid note information"}), 400
+            
+        return jsonify({"success": True, "note": serialize_note(note, True)}), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+
+

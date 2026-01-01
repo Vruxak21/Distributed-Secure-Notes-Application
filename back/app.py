@@ -6,6 +6,11 @@ from models import db
 
 from routes.users import users_bp
 from routes.notes import notes_bp
+import os
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement depuis le fichier .env
+load_dotenv()
 
 import os
 

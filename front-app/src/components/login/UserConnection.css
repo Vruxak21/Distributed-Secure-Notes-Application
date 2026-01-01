@@ -30,3 +30,7 @@
 .user-connection-container .user-connection-link:nth-child(1):hover {
     background-color: #4c51bf;
 }
+
+.red {
+    background-color: #e53e3e !important;
+}

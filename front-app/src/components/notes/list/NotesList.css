@@ -188,3 +188,9 @@
     color: #999;
     font-style: italic;
 }
+
+.notes-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './NotesList.css';
+import { NewNoteButton } from '../button/NewNoteButton';
 
 const NotesList = ({ userId, onSelectNote }) => {
     const [notes, setNotes] = useState([]);
@@ -65,9 +66,11 @@ const NotesList = ({ userId, onSelectNote }) => {
         <div className="notes-list-container">
             <div className="notes-header">
                 <h2>Mes Notes</h2>
-                <button className="refresh-btn" onClick={fetchNotes}>
-                    Actualiser
-                </button>
+                <div className="notes-actions">
+                    <NewNoteButton userId={userId} />
+                    <button className="refresh-btn" onClick={fetchNotes}>Actualiser</button>
+                </div>
+                
             </div>
 
             <div className="filter-buttons">

@@ -1,12 +1,12 @@
-import './Register.css';
+import '../Register/Register.css';
 
-export function Register() {
-    const handleRegister = () => {
+export function Login() {
+    const handleLogin = () => {
         const username = document.querySelector('input[name="username"]').value;
         const password = document.querySelector('input[name="password"]').value;
 
         if (username && password) {
-            fetch("http://localhost:5000/api/register", {
+            fetch("http://localhost:5000/api/login", {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -19,34 +19,33 @@ export function Register() {
                     if (response.ok) {
                         window.location.href = "/";
                     } else {
-                        alert("Registration failed: " + data.error);
-                        console.error("Error during registration:", data);
+                        alert("Login failed: " + data.error);
+                        console.error("Error during login:", data);
                     }
                 })
                 .catch((error) => {
-                    console.error("Error during registration:", error);
+                    console.error("Error during login:", error);
                 });
         } else {
             alert("Fill in all fields.");
         }
-
     };
 
     return (
         <div className="register-container">
             <div className="register-header">
-                <h2>Register</h2>
+                <h2>Login</h2>
             </div>
             <div className="register-form">
                 <label>
-                    Username:
+                    Username :
                     <input type="text" name="username" />
                 </label>
                 <label>
-                    Password:
+                    Password :
                     <input type="password" name="password" />
                 </label>
-                <button onClick={() => handleRegister()}>Register</button>
+                <button onClick={handleLogin}>Login</button>
             </div>
         </div>
     );

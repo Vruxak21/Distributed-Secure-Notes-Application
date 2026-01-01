@@ -36,7 +36,14 @@ class NoteService:
 			.all()
 		)
 	
-
+	@staticmethod
+	def can_user_read(note_id: int, user_id: int | None) -> bool:
+		note = Note.query.filter_by(id=note_id).first()
+		if note is None:
+			return False
+		if user_id is not None and note.owner_id == user_id:
+			return True
+		return note.visibility in ("read", "write")
 	
 	@staticmethod
 	def get_note(note_id:int):
