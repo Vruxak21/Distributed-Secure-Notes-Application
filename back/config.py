@@ -1,4 +1,6 @@
+import os
+
 class Config:
-    SQLALCHEMY_DATABASE_URI =  'sqlite:///master.db'
-    SQLALCHEMY_BINDS = {'replica': 'sqlite:///replica.db'}
+    SQLALCHEMY_DATABASE_URI =  os.environ.get('DATABASE_URL')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = 'xin-jojo-dome-island-party'  

@@ -7,6 +7,8 @@ from models import db
 from routes.users import users_bp
 from routes.notes import notes_bp
 
+import os
+
 app = Flask(__name__)
 
 # Database configuration
@@ -30,16 +32,11 @@ app.register_blueprint(notes_bp)
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, port=port)
 
 
 with app.app_context():
-    replica_engine = db.engines['replica']
-
-    db.drop_all()                        
-    db.metadata.drop_all(replica_engine)  
-
-    db.create_all() 
-    db.metadata.create_all(replica_engine)
-    
-    print("Master and Replica databases initialized!")
+    db.drop_all()                
+    db.create_all()
+    print("Database tables created.")
