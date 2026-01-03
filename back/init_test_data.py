@@ -1,18 +1,22 @@
 from app import app
 from models import db, User, Note
-from werkzeug.security import generate_password_hash
+import bcrypt
 
 def init_test_data():
     """Initialise la base de données avec des données de test"""
     with app.app_context():
         # Créer des utilisateurs de test
+        salt = bcrypt.gensalt()
+
         user1 = User(
             nom="Alice",
-            pswd_hashed=generate_password_hash("password123")
+            pswd_hashed=bcrypt.hashpw("password123".encode('utf-8'), salt).decode('utf-8')
         )
+
+        salt = bcrypt.gensalt()
         user2 = User(
             nom="Bob",
-            pswd_hashed=generate_password_hash("password456")
+            pswd_hashed=bcrypt.hashpw("password456".encode('utf-8'), salt).decode('utf-8')
         )
         
         db.session.add(user1)
