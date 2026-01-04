@@ -6,3 +6,4 @@ bcrypt
 python-dotenv
 bcrypt
 flask-jwt-extended
+requests

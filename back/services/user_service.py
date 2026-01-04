@@ -1,6 +1,8 @@
+from flask import current_app
 from models import db
 from models.user import User
 import bcrypt
+from services.sync_service import SyncService
 
 class UserService:
     @staticmethod
@@ -16,6 +18,13 @@ class UserService:
         user = User(nom=username, pswd_hashed=pswd_string)
         db.session.add(user)
         db.session.commit()
+
+        if current_app.config.get("SERVER_MODE") == "master":
+            SyncService.sync_to_replica("register_user", {
+                "id": user.id,
+                "nom": username,
+                "pswd_hashed": pswd_string
+            })
         return user
 
     @staticmethod

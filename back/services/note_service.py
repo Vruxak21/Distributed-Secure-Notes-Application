@@ -1,6 +1,8 @@
+from flask import current_app
+
 from models import db
 from models.note import Note
-
+from services.sync_service import SyncService
 class NoteService:
 	@staticmethod
 	def can_read(note: Note, user_id: int | None) -> bool:
@@ -19,6 +21,15 @@ class NoteService:
 		note = Note(owner_id=owner_id, title=title, content=content, visibility=visibility)
 		db.session.add(note)
 		db.session.commit()
+		
+		if current_app.config.get("SERVER_MODE") == "master":
+			SyncService.sync_to_replica("create_note", {
+				"id": note.id,
+				"owner_id": owner_id,
+				"title": title,
+				"content": content,
+				"visibility": visibility
+			})
 		return note
 
 	@staticmethod
