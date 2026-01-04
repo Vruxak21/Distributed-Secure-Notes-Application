@@ -45,8 +45,6 @@ def create_app(config_mode=None):
 
     app.config['SERVER_MODE'] = server_mode
 
-    print(app.url_map)
-
     return app
 
 app = create_app()
@@ -56,7 +54,7 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
 
     with app.app_context():
-        # db.drop_all()  # A voir plus tard          
+        db.drop_all()  # A voir plus tard          
         db.create_all()
         print("Database tables created.")
     
