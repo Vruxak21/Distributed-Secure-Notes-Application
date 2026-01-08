@@ -7,6 +7,8 @@ class Config:
     JWT_COOKIE_SECURE = False
     JWT_COOKIE_SAMESITE = "Lax"
     JWT_COOKIE_CSRF_PROTECT = False
+    JWT_ACCESS_COOKIE_PATH = "/api/"
+    JWT_COOKIE_DOMAIN = None
 
     SERVER_MODE = os.environ.get('SERVER_MODE', 'master')
     

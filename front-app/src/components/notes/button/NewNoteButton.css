@@ -1,20 +1,50 @@
 .new-note-btn {
-  background: linear-gradient(135deg, #10b981, #0ea5e9);
+  background: linear-gradient(135deg, #10b981, #14b8a6, #0ea5e9);
   color: #fff;
   border: none;
-  padding: 10px 16px;
-  border-radius: 6px;
+  padding: 12px 24px;
+  border-radius: 10px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.5px;
 }
+
+.new-note-btn::before {
+  content: '+';
+  margin-right: 6px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.new-note-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
 .new-note-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(14, 165, 233, 0.25);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
 }
+
+.new-note-btn:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
 .new-note-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
 }

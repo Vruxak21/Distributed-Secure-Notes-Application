@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './NoteDetail.css';
+import AuthService from '../../../utils/authService';
+import { escapeHtml } from '../../../utils/security';
 
 const NoteDetail = ({ noteId, userId, onBack }) => {
     const [note, setNote] = useState(null);
@@ -15,7 +17,16 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
     const fetchNoteDetail = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`http://localhost:5000/api/notes/${noteId}?user_id=${userId}`);
+            const response = await fetch(`http://localhost:5000/api/notes/${noteId}`, {
+                method: 'GET',
+                credentials: 'include'  // Important: envoie les cookies automatiquement
+            });
+
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+
             const data = await response.json();
 
             if (data.success) {
@@ -101,14 +112,14 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
                 <div className="note-content-section">
                     <div className="note-content-display">
                         {note.content.split('\n').map((paragraph, index) => (
-                            <p key={index}>{paragraph || '\u00A0'}</p>
+                            <p key={index} dangerouslySetInnerHTML={{ __html: escapeHtml(paragraph) || '\u00A0' }} />
                         ))}
                     </div>
                 </div>
 
                 {!note.is_owner && note.access_level === 'read' && (
                     <div className="read-only-notice">
-                        Lecture seule pas possible de modifier! 
+                        Lecture seule pas possible de modifier!
                     </div>
                 )}
             </div>

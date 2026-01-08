@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from services.note_service import NoteService
 from services.user_service import UserService
+from services.lock_service import LockService
 from flask_jwt_extended import jwt_required, get_jwt_identity
 notes_bp = Blueprint("notes",__name__,url_prefix="/api")
 
@@ -16,6 +17,39 @@ def serialize_note(note, is_owner: bool):
         "visibility": note.visibility,
         "owner_name": note.owner.nom,
     }
+
+
+@notes_bp.route('/notes', methods=['GET'])
+@jwt_required()
+def get_user_notes_jwt():
+    """Récupère toutes les notes de l'utilisateur connecté (owned + shared)"""
+    try:
+        current_user_id = int(get_jwt_identity())
+        
+        # Notes appartenant à l'utilisateur
+        owned_notes = NoteService.get_user_notes(user_id=current_user_id)
+        
+        # Notes partagées avec l'utilisateur
+        shared_notes = NoteService.get_shared_public_notes(user_id=current_user_id)
+        
+        notes_data = [
+            serialize_note(note, True)
+            for note in owned_notes
+        ] + [
+            serialize_note(note, False)
+            for note in shared_notes
+        ]
+        
+        return jsonify({
+            'success': True,
+            'notes': notes_data
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 
 @notes_bp.route('/users/<int:user_id>/notes', methods=['GET'])
@@ -50,16 +84,11 @@ def get_user_notes(user_id):
 
 
 @notes_bp.route('/notes/<int:note_id>', methods=['GET'])
+@jwt_required()
 def get_note_detail(note_id):
     """Récupère les détails d'une note spécifique"""
     try:
-        user_id = request.args.get('user_id', type=int)
-        
-        if not user_id:
-            return jsonify({
-                'success': False,
-                'error': 'user_id parameter is required'
-            }), 400
+        current_user_id = int(get_jwt_identity())
         
         note = NoteService.get_note(note_id=note_id)
         
@@ -70,10 +99,10 @@ def get_note_detail(note_id):
             }), 404
         
         # on vérifie les permissions
-        is_owner = note.owner_id == user_id
-        can_read_note = NoteService.can_user_read(note.id,user_id)
+        is_owner = note.owner_id == current_user_id
+        can_read_note = NoteService.can_user_read(note.id, current_user_id)
 
-        if not can_read_note :
+        if not can_read_note:
             return jsonify({
                 'success': False,
                 'error': 'Access denied'
@@ -135,6 +164,64 @@ def add_new_note():
         return jsonify({"success": True, "note": serialize_note(note, True)}), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+
+
+@notes_bp.route('/notes/<int:note_id>/lock', methods=['POST'])
+@jwt_required()
+def acquire_note_lock(note_id):
+    """Acquérir un lock sur une note pour édition"""
+    try:
+        current_user_id = int(get_jwt_identity())
+        result = LockService.acquire_lock(note_id, current_user_id)
+        
+        if result["success"]:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 409  # Conflict
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@notes_bp.route('/notes/<int:note_id>/lock', methods=['DELETE'])
+@jwt_required()
+def release_note_lock(note_id):
+    """Libérer le lock d'une note"""
+    try:
+        current_user_id = int(get_jwt_identity())
+        result = LockService.release_lock(note_id, current_user_id)
+        
+        if result["success"]:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 403
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@notes_bp.route('/notes/<int:note_id>/lock', methods=['GET'])
+@jwt_required()
+def get_note_lock_status(note_id):
+    """Obtenir le statut du lock d'une note"""
+    try:
+        result = LockService.get_lock_status(note_id)
+        return jsonify({
+            "success": True,
+            "lock": result
+        }), 200
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
 
 

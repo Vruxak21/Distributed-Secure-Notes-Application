@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './NotesList.css';
 import { NewNoteButton } from '../button/NewNoteButton';
+import AuthService from '../../../utils/authService';
 
 const NotesList = ({ userId, onSelectNote }) => {
     const [notes, setNotes] = useState([]);
@@ -15,7 +16,16 @@ const NotesList = ({ userId, onSelectNote }) => {
     const fetchNotes = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`http://localhost:5000/api/users/${userId}/notes`);
+            const response = await fetch('http://localhost:5000/api/notes', {
+                method: 'GET',
+                credentials: 'include'  // Important: envoie les cookies automatiquement
+            });
+
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+
             const data = await response.json();
 
             if (data.success) {
@@ -70,7 +80,7 @@ const NotesList = ({ userId, onSelectNote }) => {
                     <NewNoteButton userId={userId} />
                     <button className="refresh-btn" onClick={fetchNotes}>Actualiser</button>
                 </div>
-                
+
             </div>
 
             <div className="filter-buttons">
