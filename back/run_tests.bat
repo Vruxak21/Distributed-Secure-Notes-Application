@@ -1,5 +1,5 @@
-# Script pour lancer tous les tests de sécurité
+@REM Script pour lancer tous les tests de sécurité
 python -m pytest tests/test_security.py -v
 
-# Ou avec unittest
+@REM Ou avec unittest
 python tests/test_security.py
