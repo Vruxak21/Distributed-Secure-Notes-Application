@@ -16,6 +16,15 @@ app = Flask(__name__)
 
 # Database configuration
 app.config.from_object(Config)
+
+# JWT Configuration pour cookies httpOnly
+app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+app.config['JWT_COOKIE_CSRF_PROTECT'] = True 
+app.config['JWT_COOKIE_SECURE'] = True 
+app.config['JWT_COOKIE_SAMESITE'] = 'Lax'  # Protection CSRF
+app.config['JWT_ACCESS_COOKIE_PATH'] = '/api/'
+app.config['JWT_COOKIE_DOMAIN'] = None  # None pour localhost
+
 # Cors 
 CORS(app, resources={
     r"/api/*": {

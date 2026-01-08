@@ -5,4 +5,4 @@ class Config:
     JWT_TOKEN_LOCATION = ["cookies"]
     JWT_COOKIE_SECURE = False
     JWT_COOKIE_SAMESITE = "Lax"
-    JWT_COOKIE_CSRF_PROTECT = False
+    JWT_COOKIE_CSRF_PROTECT = True
