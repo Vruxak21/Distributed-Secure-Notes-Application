@@ -314,6 +314,92 @@ class SecurityTestCase(unittest.TestCase):
         self.assertIn(self.shared_note_id, note_ids)
 
 
+    # ===== TESTS LOCK SYSTEM =====
+
+    def test_acquire_lock_success(self):
+        """Test: Acquérir un lock sur une note en write mode"""
+        self.login('alice', 'password123')
+        response = self.client.post(f'/api/notes/{self.shared_note_id}/lock')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertTrue(data['success'])
+        self.assertEqual(data['lock']['user_id'], self.alice_id)
+
+    def test_acquire_lock_already_locked(self):
+        """Test: Tentative d'acquérir un lock déjà pris"""
+        # Alice acquiert le lock
+        self.login('alice', 'password123')
+        self.client.post(f'/api/notes/{self.shared_note_id}/lock')
+        
+        # Bob tente d'acquérir le même lock
+        self.login('bob', 'password123')
+        response = self.client.post(f'/api/notes/{self.shared_note_id}/lock')
+        self.assertEqual(response.status_code, 409)  # Conflict
+        data = json.loads(response.data)
+        self.assertFalse(data['success'])
+
+    def test_release_lock_success(self):
+        """Test: Libérer un lock acquis"""
+        self.login('alice', 'password123')
+        # Acquérir lock
+        self.client.post(f'/api/notes/{self.shared_note_id}/lock')
+        # Libérer lock
+        response = self.client.delete(f'/api/notes/{self.shared_note_id}/lock')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertTrue(data['success'])
+
+    def test_release_lock_not_owner(self):
+        """Test: INTERDIT - Libérer le lock d'un autre utilisateur"""
+        # Alice acquiert le lock
+        self.login('alice', 'password123')
+        self.client.post(f'/api/notes/{self.shared_note_id}/lock')
+        
+        # Bob tente de libérer le lock d'Alice
+        self.login('bob', 'password123')
+        response = self.client.delete(f'/api/notes/{self.shared_note_id}/lock')
+        self.assertEqual(response.status_code, 403)
+        data = json.loads(response.data)
+        self.assertFalse(data['success'])
+
+    def test_get_lock_status(self):
+        """Test: Obtenir le statut d'un lock"""
+        self.login('alice', 'password123')
+        # Lock non acquis
+        response = self.client.get(f'/api/notes/{self.shared_note_id}/lock')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertFalse(data['lock']['locked'])
+        
+        # Acquérir lock
+        self.client.post(f'/api/notes/{self.shared_note_id}/lock')
+        
+        # Vérifier statut
+        response = self.client.get(f'/api/notes/{self.shared_note_id}/lock')
+        data = json.loads(response.data)
+        self.assertTrue(data['lock']['locked'])
+        self.assertEqual(data['lock']['user_id'], self.alice_id)
+
+    def test_lock_denied_on_readonly_note(self):
+        """Test: INTERDIT - Lock sur note read-only"""
+        with self.app.app_context():
+            from models.note import Note
+            # Créer note read-only
+            readonly_note = Note(owner_id=self.alice_id, title="Read-only", content="Test", visibility="read")
+            from models import db
+            db.session.add(readonly_note)
+            db.session.commit()
+            readonly_note_id = readonly_note.id
+        
+        # Bob tente d'acquérir lock sur note read-only
+        self.login('bob', 'password123')
+        response = self.client.post(f'/api/notes/{readonly_note_id}/lock')
+        self.assertEqual(response.status_code, 409)
+        data = json.loads(response.data)
+        self.assertFalse(data['success'])
+        self.assertEqual(data['error'], 'Write access denied')
+
+
 if __name__ == '__main__':
     # Lancer les tests
     unittest.main(verbosity=2)

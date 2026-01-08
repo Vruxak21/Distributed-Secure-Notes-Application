@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from services.note_service import NoteService
 from services.user_service import UserService
+from services.lock_service import LockService
 from flask_jwt_extended import jwt_required, get_jwt_identity
 notes_bp = Blueprint("notes",__name__,url_prefix="/api")
 
@@ -163,6 +164,64 @@ def add_new_note():
         return jsonify({"success": True, "note": serialize_note(note, True)}), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+
+
+@notes_bp.route('/notes/<int:note_id>/lock', methods=['POST'])
+@jwt_required()
+def acquire_note_lock(note_id):
+    """Acquérir un lock sur une note pour édition"""
+    try:
+        current_user_id = int(get_jwt_identity())
+        result = LockService.acquire_lock(note_id, current_user_id)
+        
+        if result["success"]:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 409  # Conflict
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@notes_bp.route('/notes/<int:note_id>/lock', methods=['DELETE'])
+@jwt_required()
+def release_note_lock(note_id):
+    """Libérer le lock d'une note"""
+    try:
+        current_user_id = int(get_jwt_identity())
+        result = LockService.release_lock(note_id, current_user_id)
+        
+        if result["success"]:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 403
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@notes_bp.route('/notes/<int:note_id>/lock', methods=['GET'])
+@jwt_required()
+def get_note_lock_status(note_id):
+    """Obtenir le statut du lock d'une note"""
+    try:
+        result = LockService.get_lock_status(note_id)
+        return jsonify({
+            "success": True,
+            "lock": result
+        }), 200
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
 
 
