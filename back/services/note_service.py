@@ -71,3 +71,31 @@ class NoteService:
 	@staticmethod
 	def get_note(note_id:int):
 		return Note.query.filter_by(id=note_id).first()
+	
+	@staticmethod
+	def update_note(note_id: int, title: str, content: str) -> Note | None:
+		note = Note.query.filter_by(id=note_id).first()
+		if note is None:
+			return None
+		
+		if not title or not title.strip():
+			raise ValueError("Le titre ne peut pas être vide")
+		
+		if len(title) > 200:
+			raise ValueError("Le titre ne peut pas dépasser 200 caractères")
+		
+		if len(content) > 10000:
+			raise ValueError("Le contenu ne peut pas dépasser 10000 caractères")
+		
+		note.title = title.strip()
+		note.content = content.strip()
+		db.session.commit()
+		
+		if current_app.config.get("SERVER_MODE") == "master":
+			SyncService.sync_to_replica("update_note", {
+				"id": note.id,
+				"title": note.title,
+				"content": note.content
+			})
+		
+		return note

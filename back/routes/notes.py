@@ -224,5 +224,57 @@ def get_note_lock_status(note_id):
         }), 500
 
 
+@notes_bp.route('/notes/<int:note_id>/edit', methods=['PUT'])
+@jwt_required()
+def edit_note(note_id):
+    current_user_id = int(get_jwt_identity())
+    note = NoteService.get_note(note_id=note_id)
+    if not note:
+        return jsonify({"error": "note not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+
+    # params
+    title = (data.get("title") or "").strip()
+    content = (data.get("content") or "").strip()
+
+    if not title or not content:
+        return jsonify({"error": "invalid note data"}), 400
+
+    try:
+        note = NoteService.get_note(note_id=note_id)
+        if not note:
+            return jsonify({"error": "note not found"}), 404
+
+        if note.owner_id != current_user_id or not NoteService.can_write(note, current_user_id):
+            return jsonify({"error": "access denied"}), 403
+
+        updated_note = NoteService.update_note(
+            note_id,
+            title,
+            content
+        )
+        if not updated_note:
+            return jsonify({"error": "could not update note"}), 400
+
+        return jsonify({"success": True, "note": serialize_note(updated_note, True)}), 200
+
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
 
 
+@notes_bp.route('/notes/<int:note_id>/edit', methods=['GET'])
+@jwt_required()
+def get_note_for_edit(note_id):
+    current_user_id = int(get_jwt_identity())
+    note = NoteService.get_note(note_id=note_id)
+    if not note:
+        return jsonify({"error": "note not found"}), 404
+    
+    if note.owner_id != current_user_id or not NoteService.can_write(NoteService.get_note(note_id), current_user_id):
+        return jsonify({"error": "access denied"}), 403
+
+    return jsonify({
+        "success": True,
+        "note": serialize_note(note, True)
+    }), 200

@@ -3,7 +3,7 @@ class AuthService {
     static getFetchOptions(method = 'GET', body = null) {
         const options = {
             method,
-            credentials: 'include',  
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             }

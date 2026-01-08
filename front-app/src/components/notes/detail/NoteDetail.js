@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './NoteDetail.css';
-import AuthService from '../../../utils/authService';
 import { escapeHtml } from '../../../utils/security';
+import { Link } from 'react-router-dom';
 
 const NoteDetail = ({ noteId, userId, onBack }) => {
     const [note, setNote] = useState(null);
@@ -41,7 +41,7 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }
 
     if (loading) {
         return <div className="note-detail-loading">Chargement de la note...</div>;
@@ -74,7 +74,7 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
         <div className="note-detail-container">
             <div className="note-detail-header">
                 <button className="back-btn" onClick={onBack}>
-                    ← Retour
+                    Retour
                 </button>
                 <div className="note-detail-actions">
                     {note.lock && note.lock.is_locked && (
@@ -122,8 +122,16 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
                         Lecture seule pas possible de modifier!
                     </div>
                 )}
+
+                {note.is_owner && (
+                    <div className="note-edit-section">
+                        <Link className="edit-note-btn" to={`/notes/${noteId}/edit/`}>
+                            Éditer la note
+                        </Link>
+                    </div>
+                )}
             </div>
-        </div>
+        </div >
     );
 };
 

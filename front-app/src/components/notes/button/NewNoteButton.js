@@ -9,7 +9,7 @@ export function NewNoteButton({ userId, className = '' }) {
 
   return (
     <button className={`new-note-btn ${className}`.trim()} onClick={handleClick}>
-      + Nouvelle note
+      Nouvelle note
     </button>
   );
 }
