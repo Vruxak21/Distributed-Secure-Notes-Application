@@ -1,35 +1,58 @@
-from flask import Flask, request
-from flask_cors import CORS
-from flask_jwt_extended import JWTManager
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-from config import Config
-from models import db
-
-from routes.users import users_bp
-from routes.notes import notes_bp
-import os
-import logging
-from logging.handlers import RotatingFileHandler
 from dotenv import load_dotenv
 
 # Charger les variables d'environnement depuis le fichier .env
 load_dotenv()
 
-app = Flask(__name__)
+from flask import Flask, request
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
-# Database configuration
-app.config.from_object(Config)
+import os
+import logging
+from logging.handlers import RotatingFileHandler
 
-# JWT Configuration pour cookies httpOnly
-app.config['JWT_TOKEN_LOCATION'] = ['cookies']
-app.config['JWT_COOKIE_CSRF_PROTECT'] = False  # False en dev (True en prod avec HTTPS)
-app.config['JWT_COOKIE_SECURE'] = False  # False en dev HTTP, True en prod HTTPS
-app.config['JWT_COOKIE_SAMESITE'] = 'Lax'  # Protection CSRF
-app.config['JWT_ACCESS_COOKIE_PATH'] = '/api/'
-app.config['JWT_COOKIE_DOMAIN'] = None  # None pour localhost
+from models import db
+from config import MasterConfig, ReplicaConfig
+from routes.users import users_bp
+from routes.notes import notes_bp
+from routes.sync import sync_bp
 
-# Rate Limiting Configuration
+def create_app(config_mode=None):
+    app = Flask(__name__)
+    
+    server_mode = config_mode or os.environ.get('SERVER_MODE', 'master')
+
+    if server_mode == 'master':
+        app.config.from_object(MasterConfig)
+    else:
+        app.config.from_object(ReplicaConfig)
+    
+    # Cors 
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": ["http://localhost:3000"],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True  #Pour les cookies/sessions
+        }
+    })
+    
+    db.init_app(app)
+    jwt = JWTManager(app)
+    
+    #ne pas oublier d'ajouter chaque blue print sinon les routes seront pas prises en compte
+    app.register_blueprint(users_bp)
+    app.register_blueprint(notes_bp)
+    app.register_blueprint(sync_bp)
+
+    app.config['SERVER_MODE'] = server_mode
+
+    return app
+
+app = create_app()
+
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
@@ -37,30 +60,6 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-# Logging Configuration
-if not app.debug:
-    if not os.path.exists('logs'):
-        os.mkdir('logs')
-    file_handler = RotatingFileHandler('logs/security.log', maxBytes=10240, backupCount=10)
-    file_handler.setFormatter(logging.Formatter(
-        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-    ))
-    file_handler.setLevel(logging.INFO)
-    app.logger.addHandler(file_handler)
-    app.logger.setLevel(logging.INFO)
-    app.logger.info('Application startup')
-
-# Cors 
-CORS(app, resources={
-    r"/api/*": {
-        "origins": ["http://localhost:3000"],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-        "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True  #Pour les cookies/sessions
-    }
-})
-
-# Security Headers
 @app.after_request
 def set_security_headers(response):
     # Prévention Clickjacking
@@ -80,38 +79,40 @@ def set_security_headers(response):
     
     return response
 
-db.init_app(app)
-jwt = JWTManager(app)
-
-#ne pas oublier d'ajouter chaque blue print sinon les routes seront pas prises en compte
-app.register_blueprint(users_bp)
-app.register_blueprint(notes_bp)
-
-
-def init_db():
-    """Initialise la base de données (à appeler manuellement)"""
-    with app.app_context():
-        replica_engine = db.engines['replica']
-        db.create_all() 
-        db.metadata.create_all(replica_engine)
-        print("Master and Replica databases initialized!")
+def setup_logging():
+    if not app.debug:
+        logs_dir = 'logs'
+        try:
+            os.makedirs(logs_dir, exist_ok=True)
+        except OSError as e:
+            logs_dir = f'logs_{app.config.get("SERVER_MODE", "unknown")}'
+            os.makedirs(logs_dir, exist_ok=True)
+        
+        server_mode = app.config.get('SERVER_MODE', 'unknown')
+        log_file = f'{logs_dir}/security_{server_mode}.log'
+        
+        file_handler = RotatingFileHandler(log_file, maxBytes=10240, backupCount=10)
+        file_handler.setFormatter(logging.Formatter(
+            f'[{server_mode.upper()}] %(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        ))
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
+        app.logger.setLevel(logging.INFO)
+        app.logger.info(f'{server_mode.capitalize()} server startup')
 
 def reset_db():
-    """DANGER: Réinitialise complètement la base de données (DEV ONLY)"""
     with app.app_context():
-        replica_engine = db.engines['replica']
-        db.drop_all()                        
-        db.metadata.drop_all(replica_engine)  
-        db.create_all() 
-        db.metadata.create_all(replica_engine)
-        print("⚠️  ATTENTION: Base de données réinitialisée!")
+        db.drop_all()
+        db.create_all()
 
 if __name__ == '__main__':
-    # Initialiser la BD sans la réinitialiser
+    port = int(os.environ.get('PORT', 5000))
+
     with app.app_context():
-        replica_engine = db.engines['replica']
-        db.create_all() 
-        db.metadata.create_all(replica_engine)
-        print("Database ready (tables created if not exist)")
+        db.drop_all()  # A voir plus tard          
+        db.create_all()
+        print("Database tables created.")
+
+        setup_logging()
     
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=port)

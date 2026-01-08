@@ -1,13 +1,25 @@
 @echo off
 REM Start Flask backend
 cd back
-start cmd /k ".venv\Scripts\activate && pip install -r .\requirements.txt && python -m flask --app app run"
-REM Wait 10 seconds, then run init_test_data.py in the same venv
-timeout /t 2 >nul
+
+REM Create venv if it doesn't exist and install dependencies once
+if not exist ".venv" (
+    python -m venv .venv
+)
+call .venv\Scripts\activate
+pip install -r .\requirements.txt
+
+REM Start master and replica servers
+start cmd /k ".venv\Scripts\activate && .\scripts\windows\run_master.bat"
+start cmd /k ".venv\Scripts\activate && .\scripts\windows\run_replica.bat"
+
+REM Wait 10 seconds, then run init_test_data.py
+timeout /t 10 >nul
 start cmd /k ".venv\Scripts\activate && python init_test_data.py"
-start "" http://localhost:5000
+
 cd ..
+
 REM Start React frontend
 cd front-app
-start cmd /k "npm start"
+start cmd /k "npm install && npm start"
 cd ..
