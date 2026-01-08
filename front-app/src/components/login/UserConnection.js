@@ -37,15 +37,20 @@ export default function UserConnection({ onUserInfoFetched }) {
         return null;
     }
 
-    const handleLogout = async () => {
-        try {
-            await AuthService.logout();
-            setAmIConnected(false);
-            onUserInfoFetched?.(null);
-            window.location.href = '/login';
-        } catch (error) {
-            console.error("Erreur lors de la déconnexion:", error);
-        }
+    const handleLogout = () => {
+        fetch("http://localhost:5000/api/logout", {
+            method: "POST",
+            credentials: "include",
+        })
+            .then(response => {
+                if (response.ok) {
+                    setAmIConnected(false);
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error("Error during logout:", error);
+            });
     };
 
 
