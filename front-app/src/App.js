@@ -3,7 +3,7 @@ import { Home } from "./pages/Home/Home";
 import { Register } from "./pages/Register/Register";
 import { Login } from "./pages/Login/Login";
 import { NewNote } from "./components/notes/create/NewNote";
-import NoteEdit from "./components/notes/edit/NoteEdit";
+import NoteEdit from "./pages/edit/NoteEdit";
 
 function App() {
   return (

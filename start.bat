@@ -14,7 +14,7 @@ start cmd /k ".venv\Scripts\activate && .\scripts\windows\run_master.bat"
 start cmd /k ".venv\Scripts\activate && .\scripts\windows\run_replica.bat"
 
 REM Wait 10 seconds, then run init_test_data.py
-timeout /t 10 >nul
+timeout /t 5 >nul
 start cmd /k ".venv\Scripts\activate && python init_test_data.py"
 
 cd ..

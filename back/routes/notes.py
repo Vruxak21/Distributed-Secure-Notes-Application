@@ -108,13 +108,8 @@ def get_note_detail(note_id):
                 'error': 'Access denied'
             }), 403
         
-        # on vérifie le lock
-        lock_info = None
-        if note.lock:
-            lock_info = {
-                'is_locked': note.lock.locked,
-                'locked_by_user_id': note.lock.user_id
-            }
+        # Récupérer le statut du lock
+        lock_info = LockService.get_lock_status(note.id)
         
         return jsonify({
             'success': True,
@@ -246,7 +241,7 @@ def edit_note(note_id):
         if not note:
             return jsonify({"error": "note not found"}), 404
 
-        if note.owner_id != current_user_id or not NoteService.can_write(note, current_user_id):
+        if note.owner_id != current_user_id and not NoteService.can_write(note, current_user_id):
             return jsonify({"error": "access denied"}), 403
 
         updated_note = NoteService.update_note(
@@ -254,6 +249,12 @@ def edit_note(note_id):
             title,
             content
         )
+
+        try :
+            LockService.release_lock(note_id, current_user_id)
+        except Exception as e:
+            print(f"Error releasing lock: {e}")
+
         if not updated_note:
             return jsonify({"error": "could not update note"}), 400
 
@@ -271,8 +272,17 @@ def get_note_for_edit(note_id):
     if not note:
         return jsonify({"error": "note not found"}), 404
     
-    if note.owner_id != current_user_id or not NoteService.can_write(NoteService.get_note(note_id), current_user_id):
+    if note.owner_id != current_user_id and not NoteService.can_write(NoteService.get_note(note_id), current_user_id):
         return jsonify({"error": "access denied"}), 403
+    
+    lock_info = LockService.get_lock_status(note.id)
+    if lock_info['locked'] and lock_info['user_id'] != current_user_id:
+        return jsonify({"error": "note is locked by another user"}), 409
+    else:
+        try :
+            LockService.acquire_lock(note.id, current_user_id)
+        except Exception as e:
+            print(f"Error acquiring lock: {e}")
 
     return jsonify({
         "success": True,

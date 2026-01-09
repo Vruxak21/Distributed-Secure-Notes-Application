@@ -19,16 +19,16 @@ class NoteService:
 	@staticmethod
 	def create_note(owner_id: int, title: str, content: str = "", visibility: str = "private") -> Note:
 		if not title or not title.strip():
-			raise ValueError("Le titre ne peut pas être vide")
+			raise ValueError("Title cannot be empty")
 		
 		if len(title) > 200:
-			raise ValueError("Le titre ne peut pas dépasser 200 caractères")
+			raise ValueError("Title cannot exceed 200 characters")
 		
 		if len(content) > 10000:
-			raise ValueError("Le contenu ne peut pas dépasser 10000 caractères")
+			raise ValueError("Content cannot exceed 10000 characters")
 		
 		if visibility not in ["private", "read", "write"]:
-			raise ValueError("Visibilité invalide")
+			raise ValueError("Invalid visibility value")
 		
 		note = Note(owner_id=owner_id, title=title.strip(), content=content.strip(), visibility=visibility)
 		db.session.add(note)
@@ -79,16 +79,17 @@ class NoteService:
 			return None
 		
 		if not title or not title.strip():
-			raise ValueError("Le titre ne peut pas être vide")
+			raise ValueError("Title cannot be empty")
 		
 		if len(title) > 200:
-			raise ValueError("Le titre ne peut pas dépasser 200 caractères")
+			raise ValueError("Title cannot exceed 200 characters")
 		
 		if len(content) > 10000:
-			raise ValueError("Le contenu ne peut pas dépasser 10000 caractères")
+			raise ValueError("Content cannot exceed 10000 characters")
 		
 		note.title = title.strip()
 		note.content = content.strip()
+		note.updated_at = db.func.now()
 		db.session.commit()
 		
 		if current_app.config.get("SERVER_MODE") == "master":

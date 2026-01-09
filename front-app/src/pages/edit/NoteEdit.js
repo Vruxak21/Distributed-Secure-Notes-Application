@@ -7,6 +7,8 @@ export default function NoteEdit() {
     const navigate = useNavigate();
     const { id: noteId } = useParams();
     const [note, setNote] = useState(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [message, setMessage] = useState("");
 
     useEffect(() => {
         const checkRights = async () => {
@@ -35,6 +37,8 @@ export default function NoteEdit() {
     }, [navigate, noteId]);
 
     const saveNote = async () => {
+        setIsSaving(true);
+        setMessage("");
         try {
             const response = await fetch(`http://localhost:5000/api/notes/${noteId}/edit`, {
                 method: 'PUT',
@@ -48,13 +52,17 @@ export default function NoteEdit() {
                 }),
             });
             if (response.ok) {
-                alert('Note saved successfully.');
-                navigate(`/notes/${noteId}`);
+                setMessage("Note saved successfully.");
+                setTimeout(() => {
+                    navigate(`/`);
+                }, 1200);
             } else {
-                alert('Failed to save note.');
+                setMessage("Failed to save note.");
             }
         } catch (error) {
-            alert('Error saving note. Try again later.');
+            setMessage("Error saving note. Try again later.");
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -79,7 +87,12 @@ export default function NoteEdit() {
                         onChange={(e) => setNote({ ...note, content: e.target.value })}
                     />
                 </div>
-                <button className="save-note-btn" onClick={() => saveNote()}>Sauvegarder</button>
+                {message && (
+                    <div className="note-edit-message">{message}</div>
+                )}
+                <button className="save-note-btn" onClick={saveNote} disabled={isSaving}>
+                    {isSaving ? 'Sauvegarde en cours...' : 'Sauvegarder'}
+                </button>
             </div>
         </div>
     );
