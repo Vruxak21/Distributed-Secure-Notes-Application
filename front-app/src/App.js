@@ -3,6 +3,7 @@ import { Home } from "./pages/Home/Home";
 import { Register } from "./pages/Register/Register";
 import { Login } from "./pages/Login/Login";
 import { NewNote } from "./components/notes/create/NewNote";
+import NoteEdit from "./pages/edit/NoteEdit";
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
       <Route path="/notes/new" element={<NewNote />} />
+      <Route path="/notes/:id/edit" element={<NoteEdit />} />
       <Route path="*" element={<Home />} />
     </Routes>
   );

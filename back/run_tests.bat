@@ -1,3 +1,6 @@
+call .venv\Scripts\activate
+pip install -r ./test_requirements.txt
+
 @REM Script pour lancer tous les tests de sécurité
 python -m pytest tests/test_security.py -v
 

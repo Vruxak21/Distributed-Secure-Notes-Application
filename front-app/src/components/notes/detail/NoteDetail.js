@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import './NoteDetail.css';
-import AuthService from '../../../utils/authService';
 import { escapeHtml } from '../../../utils/security';
+import { Link, useNavigate } from 'react-router-dom';
 
 const NoteDetail = ({ noteId, userId, onBack }) => {
     const [note, setNote] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (noteId) {
@@ -31,6 +32,10 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
 
             if (data.success) {
                 setNote(data.note);
+                console.log(data.note, userId);
+                if (data.note.lock.locked && data.note.lock.user_id == userId) {
+                    navigate(`/notes/${noteId}/edit/`);
+                }
                 setError(null);
             } else {
                 setError(data.error);
@@ -41,7 +46,7 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }
 
     if (loading) {
         return <div className="note-detail-loading">Chargement de la note...</div>;
@@ -74,7 +79,7 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
         <div className="note-detail-container">
             <div className="note-detail-header">
                 <button className="back-btn" onClick={onBack}>
-                    ← Retour
+                    Retour
                 </button>
                 <div className="note-detail-actions">
                     {note.lock && note.lock.is_locked && (
@@ -122,8 +127,23 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
                         Lecture seule pas possible de modifier!
                     </div>
                 )}
+
+                {(note.is_owner || note.access_level === 'write') && note.lock.locked == false && (
+                    <div className="note-edit-section">
+                        <Link className="edit-note-btn" to={`/notes/${noteId}/edit/`}>
+                            Éditer la note
+                        </Link>
+                    </div>
+                )}
+
+                {(note.access_level === 'write' && note.lock.locked) && (
+                    <div className="read-only-notice">
+                        Cette note est actuellement verrouillée par un autre utilisateur. Vous ne pouvez pas l'éditer pour le moment.
+                    </div>
+                )}
+
             </div>
-        </div>
+        </div >
     );
 };
 

@@ -19,16 +19,16 @@ class NoteService:
 	@staticmethod
 	def create_note(owner_id: int, title: str, content: str = "", visibility: str = "private") -> Note:
 		if not title or not title.strip():
-			raise ValueError("Le titre ne peut pas être vide")
+			raise ValueError("Title cannot be empty")
 		
 		if len(title) > 200:
-			raise ValueError("Le titre ne peut pas dépasser 200 caractères")
+			raise ValueError("Title cannot exceed 200 characters")
 		
 		if len(content) > 10000:
-			raise ValueError("Le contenu ne peut pas dépasser 10000 caractères")
+			raise ValueError("Content cannot exceed 10000 characters")
 		
 		if visibility not in ["private", "read", "write"]:
-			raise ValueError("Visibilité invalide")
+			raise ValueError("Invalid visibility value")
 		
 		note = Note(owner_id=owner_id, title=title.strip(), content=content.strip(), visibility=visibility)
 		db.session.add(note)
@@ -71,3 +71,32 @@ class NoteService:
 	@staticmethod
 	def get_note(note_id:int):
 		return Note.query.filter_by(id=note_id).first()
+	
+	@staticmethod
+	def update_note(note_id: int, title: str, content: str) -> Note | None:
+		note = Note.query.filter_by(id=note_id).first()
+		if note is None:
+			return None
+		
+		if not title or not title.strip():
+			raise ValueError("Title cannot be empty")
+		
+		if len(title) > 200:
+			raise ValueError("Title cannot exceed 200 characters")
+		
+		if len(content) > 10000:
+			raise ValueError("Content cannot exceed 10000 characters")
+		
+		note.title = title.strip()
+		note.content = content.strip()
+		note.updated_at = db.func.now()
+		db.session.commit()
+		
+		if current_app.config.get("SERVER_MODE") == "master":
+			SyncService.sync_to_replica("update_note", {
+				"id": note.id,
+				"title": note.title,
+				"content": note.content
+			})
+		
+		return note
