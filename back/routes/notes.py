@@ -249,12 +249,11 @@ def edit_note(note_id):
             title,
             content
         )
-
-        try :
-            LockService.release_lock(note_id, current_user_id)
-        except Exception as e:
-            print(f"Error releasing lock: {e}")
-
+    
+        result = LockService.release_lock(note_id, current_user_id)
+        if not result["success"]:
+            return jsonify({"error": "could not release lock"}), 403
+    
         if not updated_note:
             return jsonify({"error": "could not update note"}), 400
 
@@ -279,11 +278,10 @@ def get_note_for_edit(note_id):
     if lock_info['locked'] and lock_info['user_id'] != current_user_id:
         return jsonify({"error": "note is locked by another user"}), 409
     else:
-        try :
-            LockService.acquire_lock(note.id, current_user_id)
-        except Exception as e:
-            print(f"Error acquiring lock: {e}")
-
+        result = LockService.acquire_lock(note.id, current_user_id)
+        if not result["success"]:
+            return jsonify({"error": "could not acquire lock"}), 409
+        
     return jsonify({
         "success": True,
         "note": serialize_note(note, True)
