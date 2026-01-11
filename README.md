@@ -24,6 +24,7 @@ This project implements a secure, distributed architecture ensuring data consist
 
 Ensure the following tools are installed on your system before proceeding:
 
+
 | Tool | Version | Purpose |
 | :--- | :--- | :--- |
 | **Python** | `3.10+` | Backend API and services. |
@@ -67,6 +68,7 @@ npm i
 # Tests
 
 To run the backend automated tests, follow one of the options below.
+The automated tests (python script) are used to verify the security vulnerabilities identified in the final project documentation and to ensure that the implemented security mechanisms mitigate the identified risks.
 
 ### Windows (script)
 
