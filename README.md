@@ -45,20 +45,20 @@
 
 The **Distributed Secure Notes Application** is an enterprise-grade, full-stack collaborative note management system designed with security, scalability, and reliability at its core. Built for modern distributed environments, this application demonstrates industry best practices in secure application development, distributed systems architecture, and real-time collaboration.
 
-### Business Value
+### Academic Project Highlights
 
-- **Enhanced Security**: Multi-layered security architecture protecting sensitive information
-- **Scalability**: Distributed master-replica architecture supporting horizontal scaling
+- **Enhanced Security**: Multi-layered security architecture demonstrating secure application development
+- **Scalability**: Distributed master-replica architecture showing system design principles
 - **Real-time Collaboration**: Concurrent editing with intelligent locking mechanisms
-- **Access Control**: Granular permission system for flexible sharing and collaboration
-- **High Availability**: Fault-tolerant design ensuring continuous service availability
+- **Access Control**: Granular permission system implementing role-based access control
+- **High Availability**: Fault-tolerant design principles in distributed systems
 
-### Use Cases
+### Learning Outcomes
 
-- **Corporate Knowledge Management**: Secure sharing of sensitive business documentation
-- **Team Collaboration**: Real-time collaborative note-taking for distributed teams
-- **Compliance Documentation**: Audit-trail enabled secure document management
-- **Research & Development**: Controlled access to intellectual property and research notes
+- **Secure Application Development**: Implementation of industry-standard security practices
+- **Distributed Systems**: Understanding of master-replica architecture and data synchronization
+- **Full-Stack Development**: Integration of modern backend and frontend technologies
+- **Software Architecture**: Application of design patterns and architectural principles
 
 ---
 
@@ -105,19 +105,19 @@ The **Distributed Secure Notes Application** is an enterprise-grade, full-stack 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Client Layer (React)                     │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│                     Client Layer (React)                    │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
 │  │  Auth Module │  │ Notes Manager│  │  UI Components│      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
 └────────────────────────────┬────────────────────────────────┘
                              │ HTTPS / REST API
                              ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                  Application Layer (Flask)                   │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   API Routes │  │   Services   │  │ Middleware   │      │
-│  │              │  │              │  │ (JWT, CORS)  │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│                  Application Layer (Flask)                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │   API Routes │  │   Services   │  │ Middleware   │       │
+│  │              │  │              │  │ (JWT, CORS)  │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
 └────────────────────────────┬────────────────────────────────┘
                              │
               ┌──────────────┴──────────────┐
@@ -464,7 +464,9 @@ Strict-Transport-Security: max-age=31536000 (Production)
 
 ### Vulnerability Reporting
 
-If you discover a security vulnerability, please email security@yourcompany.com. Do not open a public issue.
+If you discover a security vulnerability, please open an issue on GitHub with the label "security". 
+
+**Note**: This is an academic project for learning purposes.
 
 ---
 
@@ -776,24 +778,23 @@ logging.basicConfig(level=logging.DEBUG)
 
 ### Getting Help
 
-1. Check [Documentation](#-documentation)
-2. Search [Existing Issues](https://github.com/your-org/distributed-secure-notes/issues)
-3. Join our [Discord Community](https://discord.gg/your-server)
-4. Email support: support@yourcompany.com
+1. Check the [Documentation](#-documentation)
+2. Search [Existing Issues](https://github.com/Vruxak21/Distributed-Secure-Notes-Application/issues)
+3. Open a new issue on GitHub
+4. Review course materials and resources
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions from the community! Please follow these guidelines:
+Contributions and suggestions are welcome! This is an academic project developed as part of a Software Architecture and Design course.
 
 ### Development Workflow
 
 1. **Fork the Repository**
    ```bash
-   git clone https://github.com/your-username/distributed-secure-notes.git
-   cd distributed-secure-notes
-   git remote add upstream https://github.com/original-org/distributed-secure-notes.git
+   git clone https://github.com/Vruxak21/Distributed-Secure-Notes-Application.git
+   cd Distributed-Secure-Notes-Application
    ```
 
 2. **Create a Feature Branch**
@@ -830,18 +831,9 @@ We welcome contributions from the community! Please follow these guidelines:
 ### Code Standards
 
 - **Python**: Follow PEP 8 style guide
-- **JavaScript**: Follow Airbnb style guide
+- **JavaScript**: Follow standard JavaScript conventions
 - **Documentation**: Update README and inline comments
-- **Testing**: Maintain >80% code coverage
-
-### Pull Request Process
-
-1. Update documentation with details of changes
-2. Update CHANGELOG.md
-3. Ensure all tests pass
-4. Request review from maintainers
-5. Address review feedback
-6. Squash commits before merge
+- **Testing**: Maintain test coverage
 
 ---
 
@@ -852,7 +844,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ```
 MIT License
 
-Copyright (c) 2026 Your Organization
+Copyright (c) 2024 Vruxak21
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -863,66 +855,34 @@ in the Software without restriction...
 
 ## 🙏 Acknowledgments
 
-- **Flask Community** - Excellent web framework
+This project was developed as an academic assignment for the Software Architecture and Design (SAD) course at **Nirma University**.
+
+**Special Thanks:**
+- **Course Instructors** - For guidance and support throughout the project
+- **Flask Community** - Excellent web framework and documentation
 - **React Team** - Powerful UI library
-- **OWASP** - Security best practices
-- **Contributors** - Thank you to all contributors
-- **Nirma University** - Academic support and guidance
+- **OWASP** - Security best practices and guidelines
+- **Nirma University** - Academic resources and infrastructure
 
 ---
 
-## 📞 Support
+## 📞 About
 
-### Documentation
-- [API Documentation](#-api-documentation)
-- [Security Guide](#-security)
-- [Deployment Guide](#-deployment)
+### Project Information
+- **Course**: Software Architecture and Design (SAD)
+- **Institution**: Nirma University
+- **Semester**: 6
+- **Academic Year**: 2024
 
-### Community
-- **Discord**: [Join Server](https://discord.gg/your-server)
-- **Stack Overflow**: Tag `distributed-secure-notes`
-- **Twitter**: [@YourProject](https://twitter.com/yourproject)
-
-### Commercial Support
-For enterprise support and consulting:
-- **Email**: enterprise@yourcompany.com
-- **Website**: https://yourcompany.com/support
-- **Phone**: +1 (555) 123-4567
-
----
-
-## 📈 Project Status
-
-![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen)
-![Tests](https://img.shields.io/badge/Tests-85%20Passed-success)
-![Coverage](https://img.shields.io/badge/Coverage-92%25-brightgreen)
-![Last Commit](https://img.shields.io/badge/Last%20Commit-January%202026-blue)
-
-### Roadmap
-
-#### Q1 2026
-- [ ] PostgreSQL/MySQL support
-- [ ] Real-time WebSocket notifications
-- [ ] Advanced search with Elasticsearch
-- [ ] Mobile application (React Native)
-
-#### Q2 2026
-- [ ] Multi-factor authentication (MFA)
-- [ ] Single Sign-On (SSO) integration
-- [ ] Advanced analytics dashboard
-- [ ] Kubernetes deployment templates
-
-#### Q3 2026
-- [ ] Microservices architecture migration
-- [ ] GraphQL API support
-- [ ] AI-powered note suggestions
-- [ ] Advanced collaboration features
+### Resources
+- [GitHub Repository](https://github.com/Vruxak21/Distributed-Secure-Notes-Application)
+- [Report Issues](https://github.com/Vruxak21/Distributed-Secure-Notes-Application/issues)
 
 ---
 
 <div align="center">
 
-**Built with ❤️ by the Development Team**
+**Developed as an Academic Project**
 
 [⬆ Back to Top](#distributed-secure-notes-application)
 
