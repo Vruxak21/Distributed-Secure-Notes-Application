@@ -20,7 +20,7 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
             setLoading(true);
             const response = await fetch(`http://localhost:5000/api/notes/${noteId}`, {
                 method: 'GET',
-                credentials: 'include'  // Important: envoie les cookies automatiquement
+                credentials: 'include'  // Important: sends cookies automatically
             });
 
             if (response.status === 401) {
@@ -41,7 +41,7 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
                 setError(data.error);
             }
         } catch (err) {
-            setError('Erreur de connexion au serveur');
+            setError('Server connection error');
             console.error('Error fetching note detail:', err);
         } finally {
             setLoading(false);
@@ -49,14 +49,14 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
     }
 
     if (loading) {
-        return <div className="note-detail-loading">Chargement de la note...</div>;
+        return <div className="note-detail-loading">Loading note...</div>;
     }
 
     if (error) {
         return (
             <div className="note-detail-error">
-                <p>Erreur : {error}</p>
-                <button onClick={onBack}>Retour à la liste</button>
+                <p>Error: {error}</p>
+                <button onClick={onBack}>Back to list</button>
             </div>
         );
     }
@@ -79,13 +79,13 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
         <div className="note-detail-container">
             <div className="note-detail-header">
                 <button className="back-btn" onClick={onBack}>
-                    Retour
+                    Back
                 </button>
                 <div className="note-detail-actions">
                     {note.lock && note.lock.is_locked && (
                         <span className="lock-indicator">
-                            Verrouillée
-                            {note.lock.locked_by_user_id === userId && " (par vous)"}
+                            Locked
+                            {note.lock.locked_by_user_id === userId && " (by you)"}
                         </span>
                     )}
                 </div>
@@ -95,18 +95,18 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
                 <div className="note-detail-meta">
                     <div className="note-status-badges">
                         {note.is_owner ? (
-                            <span className="badge badge-owner">Propriétaire</span>
+                            <span className="badge badge-owner">Owner</span>
                         ) : (
                             <span className={`badge badge-${note.access_level}`}>
-                                {note.access_level === 'read' ? 'Lecture seule' : 'Lecture/Écriture'}
+                                {note.access_level === 'read' ? 'Read Only' : 'Read/Write'}
                             </span>
                         )}
                     </div>
 
                     <div className="note-info">
-                        <p><strong>Propriétaire :</strong> {note.owner_name}</p>
-                        <p><strong>Créée le :</strong> {formatDate(note.created_at)}</p>
-                        <p><strong>Modifiée le :</strong> {formatDate(note.updated_at)}</p>
+                        <p><strong>Owner:</strong> {note.owner_name}</p>
+                        <p><strong>Created on:</strong> {formatDate(note.created_at)}</p>
+                        <p><strong>Modified on:</strong> {formatDate(note.updated_at)}</p>
                     </div>
                 </div>
 
@@ -124,21 +124,21 @@ const NoteDetail = ({ noteId, userId, onBack }) => {
 
                 {!note.is_owner && note.access_level === 'read' && (
                     <div className="read-only-notice">
-                        Lecture seule pas possible de modifier!
+                        Read only - cannot modify!
                     </div>
                 )}
 
                 {(note.is_owner || note.access_level === 'write') && note.lock.locked == false && (
                     <div className="note-edit-section">
                         <Link className="edit-note-btn" to={`/notes/${noteId}/edit/`}>
-                            Éditer la note
+                            Edit note
                         </Link>
                     </div>
                 )}
 
                 {(note.access_level === 'write' && note.lock.locked) && (
                     <div className="read-only-notice">
-                        Cette note est actuellement verrouillée par un autre utilisateur. Vous ne pouvez pas l'éditer pour le moment.
+                        This note is currently locked by another user. You cannot edit it at the moment.
                     </div>
                 )}
 

@@ -23,12 +23,12 @@ export function NewNote() {
       });
       const data = await resp.json();
       if (!resp.ok) {
-        setError(data.error || 'Erreur lors de la création');
+        setError(data.error || 'Error during creation');
       } else {
         navigate('/');
       }
     } catch (err) {
-      setError('Erreur de connexion au serveur');
+      setError('Server connection error');
     } finally {
       setLoading(false);
     }
@@ -37,29 +37,29 @@ export function NewNote() {
   return (
     <div className="new-note-page">
       <div className="new-note-card">
-        <h2>Créer une nouvelle note</h2>
+        <h2>Create a new note</h2>
         <form onSubmit={handleSubmit} className="new-note-form">
           <label>
-            Titre
+            Title
             <input value={title} onChange={(e) => setTitle(e.target.value)} required />
           </label>
           <label>
-            Contenu
+            Content
             <textarea value={content} onChange={(e) => setContent(e.target.value)} required rows={6} />
           </label>
           <label>
-            Visibilité
+            Visibility
             <select value={visibility} onChange={(e) => setVisibility(e.target.value)}>
-              <option value="private">Privé</option>
-              <option value="read">Lecture seule</option>
-              <option value="write">Lecture/Écriture</option>
+              <option value="private">Private</option>
+              <option value="read">Read Only</option>
+              <option value="write">Read/Write</option>
             </select>
           </label>
           {error && <div className="form-error">{error}</div>}
           <div className="form-actions">
-            <button type="button" className="ghost" onClick={() => navigate('/')}>Annuler</button>
+            <button type="button" className="ghost" onClick={() => navigate('/')}>Cancel</button>
             <button type="submit" disabled={loading}>
-              {loading ? 'Création…' : 'Créer'}
+              {loading ? 'Creating...' : 'Create'}
             </button>
           </div>
         </form>

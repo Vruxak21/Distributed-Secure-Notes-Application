@@ -22,14 +22,14 @@ def serialize_note(note, is_owner: bool):
 @notes_bp.route('/notes', methods=['GET'])
 @jwt_required()
 def get_user_notes_jwt():
-    """Récupère toutes les notes de l'utilisateur connecté (owned + shared)"""
+    """Get all notes for the logged-in user (owned + shared)"""
     try:
         current_user_id = int(get_jwt_identity())
         
-        # Notes appartenant à l'utilisateur
+        # Notes owned by the user
         owned_notes = NoteService.get_user_notes(user_id=current_user_id)
         
-        # Notes partagées avec l'utilisateur
+        # Notes shared with the user
         shared_notes = NoteService.get_shared_public_notes(user_id=current_user_id)
         
         notes_data = [
@@ -54,12 +54,12 @@ def get_user_notes_jwt():
 
 @notes_bp.route('/users/<int:user_id>/notes', methods=['GET'])
 def get_user_notes(user_id):
-    """Récupère toutes les notes d'un utilisateur (owned + shared)"""
+    """Get all notes for a user (owned + shared)"""
     try:
-        # Notes appartenant à l'utilisateur
+        # Notes owned by the user
         owned_notes = NoteService.get_user_notes(user_id=user_id)
         
-        # Notes partagées avec l'utilisateur
+        # Notes shared with the user
         shared_notes = NoteService.get_shared_public_notes(user_id=user_id)
         notes_data = []
         
@@ -86,7 +86,7 @@ def get_user_notes(user_id):
 @notes_bp.route('/notes/<int:note_id>', methods=['GET'])
 @jwt_required()
 def get_note_detail(note_id):
-    """Récupère les détails d'une note spécifique"""
+    """Get details of a specific note"""
     try:
         current_user_id = int(get_jwt_identity())
         
@@ -98,7 +98,7 @@ def get_note_detail(note_id):
                 'error': 'Note not found'
             }), 404
         
-        # on vérifie les permissions
+        # Check permissions
         is_owner = note.owner_id == current_user_id
         can_read_note = NoteService.can_user_read(note.id, current_user_id)
 
@@ -108,7 +108,7 @@ def get_note_detail(note_id):
                 'error': 'Access denied'
             }), 403
         
-        # Récupérer le statut du lock
+        # Get lock status
         lock_info = LockService.get_lock_status(note.id)
         
         return jsonify({
@@ -131,10 +131,10 @@ def get_note_detail(note_id):
 @jwt_required()
 def add_new_note():
 
-    current_user_id = int(get_jwt_identity())  # id du user pas dans la requete
+    current_user_id = int(get_jwt_identity())  # user id not in request
     data = request.get_json(silent=True) or {}
 
-    # params
+    # parameters
     title = (data.get("title") or "").strip()
     content = (data.get("content") or "").strip()
     visibility = (data.get("visibility") or "").strip()
@@ -164,7 +164,7 @@ def add_new_note():
 @notes_bp.route('/notes/<int:note_id>/lock', methods=['POST'])
 @jwt_required()
 def acquire_note_lock(note_id):
-    """Acquérir un lock sur une note pour édition"""
+    """Acquire a lock on a note for editing"""
     try:
         current_user_id = int(get_jwt_identity())
         result = LockService.acquire_lock(note_id, current_user_id)
@@ -184,7 +184,7 @@ def acquire_note_lock(note_id):
 @notes_bp.route('/notes/<int:note_id>/lock', methods=['DELETE'])
 @jwt_required()
 def release_note_lock(note_id):
-    """Libérer le lock d'une note"""
+    """Release the lock on a note"""
     try:
         current_user_id = int(get_jwt_identity())
         result = LockService.release_lock(note_id, current_user_id)
@@ -204,7 +204,7 @@ def release_note_lock(note_id):
 @notes_bp.route('/notes/<int:note_id>/lock', methods=['GET'])
 @jwt_required()
 def get_note_lock_status(note_id):
-    """Obtenir le statut du lock d'une note"""
+    """Get the lock status of a note"""
     try:
         result = LockService.get_lock_status(note_id)
         return jsonify({

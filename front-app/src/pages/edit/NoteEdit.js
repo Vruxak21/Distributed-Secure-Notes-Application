@@ -72,7 +72,7 @@ export default function NoteEdit() {
                 <h1 className="note-edit-title-main">Note edit</h1>
                 {note && (
                     <div className="note-edit-creator">
-                        <span>Créateur : <strong>{note.owner_name}</strong></span>
+                        <span>Creator: <strong>{note.owner_name}</strong></span>
                     </div>
                 )}
                 <div className="note-edit-title">
@@ -91,7 +91,7 @@ export default function NoteEdit() {
                     <div className="note-edit-message">{message}</div>
                 )}
                 <button className="save-note-btn" onClick={saveNote} disabled={isSaving}>
-                    {isSaving ? 'Sauvegarde en cours...' : 'Sauvegarder'}
+                    {isSaving ? 'Saving...' : 'Save'}
                 </button>
             </div>
         </div>

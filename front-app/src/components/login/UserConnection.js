@@ -11,7 +11,7 @@ export default function UserConnection({ onUserInfoFetched }) {
             try {
                 const response = await fetch("http://localhost:5000/api/protected", {
                     method: "GET",
-                    credentials: 'include'  // Important: envoie les cookies automatiquement
+                    credentials: 'include'  // Important: sends cookies automatically
                 });
 
                 if (!response.ok) {
@@ -24,7 +24,7 @@ export default function UserConnection({ onUserInfoFetched }) {
                 setAmIConnected(true);
                 onUserInfoFetched?.({ id: data.user_id, username: data.logged_in_as });
             } catch (error) {
-                console.error('Erreur vérification authentification:', error);
+                console.error('Error verifying authentication:', error);
                 setAmIConnected(false);
                 onUserInfoFetched?.(null);
             }

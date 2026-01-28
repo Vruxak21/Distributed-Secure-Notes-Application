@@ -23,11 +23,11 @@ class AuthService {
                 credentials: 'include'
             });
         } catch (error) {
-            console.error('Erreur lors de la déconnexion:', error);
+            console.error('Error during logout:', error);
         }
     }
 
-    // Vérifie l'authentification en appelant l'endpoint protected
+    // Verify authentication by calling the protected endpoint
     static async checkAuth() {
         try {
             const response = await fetch('http://localhost:5000/api/protected', {

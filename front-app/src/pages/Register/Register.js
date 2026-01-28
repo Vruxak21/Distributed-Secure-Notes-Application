@@ -15,13 +15,13 @@ export function Register() {
         const password = document.querySelector('input[name="password"]').value;
 
         if (!username || !password) {
-            setError("Veuillez remplir tous les champs");
+            setError("Please fill in all fields");
             setLoading(false);
             return;
         }
 
         if (password.length < 6) {
-            setError("Le mot de passe doit contenir au moins 6 caractères");
+            setError("Password must contain at least 6 characters");
             setLoading(false);
             return;
         }
@@ -29,7 +29,7 @@ export function Register() {
         try {
             const response = await fetch("http://localhost:5000/api/register", {
                 method: "POST",
-                credentials: 'include',  // Important: pour recevoir les cookies
+                credentials: 'include',  // Important: to receive cookies
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -39,14 +39,14 @@ export function Register() {
             const data = await response.json();
 
             if (response.ok) {
-                // Le cookie JWT est automatiquement stocké par le navigateur
+                // JWT cookie is automatically stored by the browser
                 window.location.href = "/";
             } else {
-                setError(data.error || "Échec de l'inscription");
+                setError(data.error || "Registration failed");
             }
         } catch (error) {
-            console.error("Erreur lors de l'inscription:", error);
-            setError("Erreur de connexion au serveur");
+            console.error("Error during registration:", error);
+            setError("Server connection error");
         } finally {
             setLoading(false);
         }
@@ -55,20 +55,20 @@ export function Register() {
     return (
         <div className="register-container">
             <div className="register-header">
-                <h2>Inscription</h2>
+                <h2>Register</h2>
             </div>
             <form className="register-form" onSubmit={handleRegister}>
                 {error && <div className="error-message">{error}</div>}
                 <label>
-                    Nom d'utilisateur :
+                    Username:
                     <input type="text" name="username" disabled={loading} />
                 </label>
                 <label>
-                    Mot de passe :
+                    Password:
                     <input type="password" name="password" disabled={loading} />
                 </label>
                 <button type="submit" disabled={loading}>
-                    {loading ? 'Inscription...' : 'S\'inscrire'}
+                    {loading ? 'Registering...' : 'Sign Up'}
                 </button>
             </form>
         </div>

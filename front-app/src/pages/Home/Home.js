@@ -26,9 +26,9 @@ export function Home() {
     return (
         <div className="App">
             <header className="App-header">
-                <h1>Notes Sécurisées</h1>
+                <h1>Secure Notes</h1>
                 <p className="user-info">
-                    utilisateur: {userInfo?.username ?? "—"}
+                    user: {userInfo?.username ?? "—"}
                 </p>
             </header>
 
@@ -55,7 +55,7 @@ export function Home() {
                         />
                     )
                 ) : (
-                    <div>Connecte-toi pour voir tes notes.</div>
+                    <div>Sign in to see your notes.</div>
                 )}
             </main>
         </div>

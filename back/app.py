@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 
-# Charger les variables d'environnement depuis le fichier .env
+# Load environment variables from .env file
 load_dotenv()
 
 from flask import Flask, request
@@ -29,20 +29,20 @@ def create_app(config_mode=None):
     else:
         app.config.from_object(ReplicaConfig)
     
-    # Cors 
+    # CORS configuration
     CORS(app, resources={
         r"/api/*": {
             "origins": ["http://localhost:3000"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
             "allow_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": True  #Pour les cookies/sessions
+            "supports_credentials": True  # For cookies/sessions
         }
     })
     
     db.init_app(app)
     jwt = JWTManager(app)
     
-    #ne pas oublier d'ajouter chaque blue print sinon les routes seront pas prises en compte
+    # Register all blueprints to make routes available
     app.register_blueprint(users_bp)
     app.register_blueprint(notes_bp)
     app.register_blueprint(sync_bp)
@@ -62,18 +62,18 @@ limiter = Limiter(
 
 @app.after_request
 def set_security_headers(response):
-    # Prévention Clickjacking
+    # Clickjacking prevention
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    # Prévention MIME-type sniffing
+    # MIME-type sniffing prevention
     response.headers['X-Content-Type-Options'] = 'nosniff'
-    # Protection XSS intégrée du navigateur
+    # Built-in browser XSS protection
     response.headers['X-XSS-Protection'] = '1; mode=block'
     # Content Security Policy
     response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
-    # HSTS (décommenter en production HTTPS)
+    # HSTS (uncomment in production with HTTPS)
     # response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     
-    # Log requêtes sensibles
+    # Log sensitive requests
     if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
         app.logger.info(f'{request.method} {request.path} from {get_remote_address()}')
     
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
 
     with app.app_context():
-        db.drop_all()  # A voir plus tard          
+        db.drop_all()  # To review later          
         db.create_all()
         print("Database tables created.")
 

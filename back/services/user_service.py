@@ -8,16 +8,16 @@ class UserService:
     @staticmethod
     def register(username: str, password: str):
         if not username or not password:
-            raise ValueError("Nom et mdp requis")
+            raise ValueError("Username and password required")
         
         if len(password) < 6:
-            raise ValueError("Le mot de passe doit contenir au moins 6 caractères")
+            raise ValueError("Password must contain at least 6 characters")
         
         if len(username) < 3 or len(username) > 50:
-            raise ValueError("Le nom d'utilisateur doit contenir entre 3 et 50 caractères")
+            raise ValueError("Username must be between 3 and 50 characters")
         
         if User.query.filter_by(nom=username).first():
-            raise ValueError("Ce nom d'utilisateur existe déjà")
+            raise ValueError("This username already exists")
         
         salt = bcrypt.gensalt()
         pswd_hashed = bcrypt.hashpw(password.encode('utf-8'), salt)

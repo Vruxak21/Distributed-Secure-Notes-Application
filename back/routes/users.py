@@ -5,7 +5,7 @@ from services.user_service import UserService
 from flask_limiter.util import get_remote_address
 import datetime
 
-delta_time = 60 * 60 # Durée de validité du token en secondes
+delta_time = 60 * 60 # Token validity duration in seconds
 
 users_bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -16,7 +16,7 @@ def register():
         user = UserService.register(data.get("username"), data.get("password"))
         current_app.logger.info(f'New user registered: {user.nom} from {get_remote_address()}')
         access_token = create_access_token(identity=str(user.id), expires_delta=datetime.timedelta(seconds=delta_time))
-        response = jsonify({"success": True, "message": "Inscription réussie", "user": {"id": user.id, "username": user.nom}})
+        response = jsonify({"success": True, "message": "Registration successful", "user": {"id": user.id, "username": user.nom}})
         set_access_cookies(response, access_token)
         return response, 201
     except ValueError as e:
@@ -34,7 +34,7 @@ def login():
     
     current_app.logger.info(f'Successful login: {user.nom} from {get_remote_address()}')
     access_token = create_access_token(identity=str(user.id), expires_delta=datetime.timedelta(seconds=delta_time))
-    response = jsonify({"success": True, "message": "Connexion réussie", "user": {"id": user.id, "username": user.nom}})
+    response = jsonify({"success": True, "message": "Login successful", "user": {"id": user.id, "username": user.nom}})
     set_access_cookies(response, access_token)
     return response, 200
 
@@ -45,7 +45,7 @@ def protected():
     user = UserService.get_user(int(current_user_id))
     
     if not user:
-        return jsonify({"error": "Utilisateur non trouvé"}), 404
+        return jsonify({"error": "User not found"}), 404
     
     return jsonify(logged_in_as=user.nom, user_id=current_user_id), 200
 
@@ -54,6 +54,6 @@ def protected():
 def logout():
     current_user_id = get_jwt_identity()
     current_app.logger.info(f'User {current_user_id} logged out from {get_remote_address()}')
-    response = jsonify({"success": True, "message": "Déconnexion réussie"})
+    response = jsonify({"success": True, "message": "Logout successful"})
     unset_jwt_cookies(response)
     return response, 200

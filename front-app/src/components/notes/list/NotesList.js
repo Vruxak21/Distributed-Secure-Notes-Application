@@ -18,7 +18,7 @@ const NotesList = ({ userId, onSelectNote }) => {
             setLoading(true);
             const response = await fetch('http://localhost:5000/api/notes', {
                 method: 'GET',
-                credentials: 'include'  // Important: envoie les cookies automatiquement
+                credentials: 'include'  // Important: sends cookies automatically
             });
 
             if (response.status === 401) {
@@ -35,7 +35,7 @@ const NotesList = ({ userId, onSelectNote }) => {
                 setError(data.error);
             }
         } catch (err) {
-            setError('Erreur de connexion au serveur');
+            setError('Server connection error');
             console.error('Error fetching notes:', err);
         } finally {
             setLoading(false);
@@ -50,24 +50,24 @@ const NotesList = ({ userId, onSelectNote }) => {
 
     const getAccessBadge = (note) => {
         if (note.is_owner) {
-            return <span className="badge badge-owner">Propriétaire</span>;
+            return <span className="badge badge-owner">Owner</span>;
         }
         return (
             <span className={`badge badge-${note.visibility}`}>
-                {note.visibility === 'read' ? 'Lecture seule' : 'Lecture/Écriture '}
+                {note.visibility === 'read' ? 'Read Only' : 'Read/Write'}
             </span>
         );
     };
 
     if (loading) {
-        return <div className="notes-loading">Chargement des notes...</div>;
+        return <div className="notes-loading">Loading notes...</div>;
     }
 
     if (error) {
         return (
             <div className="notes-error">
-                <p>Erreur : {error}</p>
-                <button onClick={fetchNotes}>Réessayer</button>
+                <p>Error: {error}</p>
+                <button onClick={fetchNotes}>Retry</button>
             </div>
         );
     }
@@ -75,10 +75,10 @@ const NotesList = ({ userId, onSelectNote }) => {
     return (
         <div className="notes-list-container">
             <div className="notes-header">
-                <h2>Mes Notes</h2>
+                <h2>My Notes</h2>
                 <div className="notes-actions">
                     <NewNoteButton userId={userId} />
-                    <button className="refresh-btn" onClick={fetchNotes}>Actualiser</button>
+                    <button className="refresh-btn" onClick={fetchNotes}>Refresh</button>
                 </div>
 
             </div>
@@ -88,25 +88,25 @@ const NotesList = ({ userId, onSelectNote }) => {
                     className={filter === 'all' ? 'active' : ''}
                     onClick={() => setFilter('all')}
                 >
-                    Toutes ({notes.length})
+                    All ({notes.length})
                 </button>
                 <button
                     className={filter === 'owned' ? 'active' : ''}
                     onClick={() => setFilter('owned')}
                 >
-                    Mes notes ({notes.filter(n => n.is_owner).length})
+                    My notes ({notes.filter(n => n.is_owner).length})
                 </button>
                 <button
                     className={filter === 'shared' ? 'active' : ''}
                     onClick={() => setFilter('shared')}
                 >
-                    Partagées ({notes.filter(n => !n.is_owner).length})
+                    Shared ({notes.filter(n => !n.is_owner).length})
                 </button>
             </div>
 
             {filteredNotes.length === 0 ? (
                 <div className="no-notes">
-                    <p>Aucune note à afficher</p>
+                    <p>No notes to display</p>
                 </div>
             ) : (
                 <div className="notes-grid">

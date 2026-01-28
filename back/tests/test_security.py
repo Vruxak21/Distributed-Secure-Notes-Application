@@ -1,12 +1,12 @@
 # tests/test_security.py
 """
-Suite de tests de sécurité pour l'application Notes
-Tests: XSS, CSRF, Injection SQL, Permissions, Authentication
+Security test suite for Notes application
+Tests: XSS, CSRF, SQL Injection, Permissions, Authentication
 """
 
 import sys
 import os
-# on ajoute le dossier parent au path pour importer app
+# Add parent folder to path to import app
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import unittest
@@ -18,20 +18,20 @@ from models.note import Note
 import bcrypt
 
 class SecurityTestCase(unittest.TestCase):
-    """Tests de sécurité de l'application"""
+    """Application security tests"""
 
     def setUp(self):
-        """Configuration avant chaque test"""
+        """Configuration before each test"""
         self.app = app
         self.app.config['TESTING'] = True
-        self.app.config['WTF_CSRF_ENABLED'] = False  # Désactiver CSRF pour les tests
+        self.app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF for tests
         self.client = self.app.test_client()
         
-        # Réinitialiser la BD
+        # Reset database
         with self.app.app_context():
             reset_db()
             
-            # Créer utilisateurs de test
+            # Create test users
             salt = bcrypt.gensalt()
             alice_hash = bcrypt.hashpw('password123'.encode('utf-8'), salt).decode('utf-8')
             bob_hash = bcrypt.hashpw('password123'.encode('utf-8'), salt).decode('utf-8')
@@ -43,9 +43,9 @@ class SecurityTestCase(unittest.TestCase):
             db.session.add(bob)
             db.session.commit()
             
-            # Créer notes de test
-            alice_note = Note(owner_id=alice.id, title="Note Alice", content="Contenu privé", visibility="private")
-            shared_note = Note(owner_id=alice.id, title="Note partagée", content="Contenu partagé", visibility="read")
+            # Create test notes
+            alice_note = Note(owner_id=alice.id, title="Alice's Note", content="Private content", visibility="private")
+            shared_note = Note(owner_id=alice.id, title="Shared note", content="Shared content", visibility="read")
             
             db.session.add(alice_note)
             db.session.add(shared_note)
@@ -57,12 +57,12 @@ class SecurityTestCase(unittest.TestCase):
             self.shared_note_id = shared_note.id
 
     def tearDown(self):
-        """Nettoyage après chaque test"""
+        """Cleanup after each test"""
         with self.app.app_context():
             db.session.remove()
 
     def login(self, username, password):
-        """Helper pour se connecter et obtenir le cookie JWT"""
+        """Helper to login and get JWT cookie"""
         response = self.client.post('/api/login', 
             data=json.dumps({'username': username, 'password': password}),
             content_type='application/json'
@@ -72,7 +72,7 @@ class SecurityTestCase(unittest.TestCase):
     # ===== TESTS AUTHENTICATION =====
 
     def test_register_success(self):
-        """Test: Inscription réussie"""
+        """Test: Successful registration"""
         response = self.client.post('/api/register',
             data=json.dumps({'username': 'charlie', 'password': 'password123'}),
             content_type='application/json'
@@ -83,27 +83,27 @@ class SecurityTestCase(unittest.TestCase):
         self.assertEqual(data['user']['username'], 'charlie')
 
     def test_register_weak_password(self):
-        """Test: Inscription avec mot de passe faible"""
+        """Test: Registration with weak password"""
         response = self.client.post('/api/register',
             data=json.dumps({'username': 'hacker', 'password': '123'}),
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.data)
-        self.assertIn('au moins 6 caractères', data['error'])
+        self.assertIn('at least 6 characters', data['error'])
 
     def test_register_duplicate_username(self):
-        """Test: Inscription avec username existant"""
+        """Test: Registration with existing username"""
         response = self.client.post('/api/register',
             data=json.dumps({'username': 'alice', 'password': 'newpassword'}),
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.data)
-        self.assertIn('existe déjà', data['error'])
+        self.assertIn('already exists', data['error'])
 
     def test_login_success(self):
-        """Test: Connexion réussie"""
+        """Test: Successful login"""
         response = self.login('alice', 'password123')
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
@@ -111,17 +111,17 @@ class SecurityTestCase(unittest.TestCase):
         self.assertIn('Set-Cookie', response.headers)
 
     def test_login_invalid_credentials(self):
-        """Test: Connexion avec mauvais credentials"""
+        """Test: Login with invalid credentials"""
         response = self.login('alice', 'wrongpassword')
         self.assertEqual(response.status_code, 401)
 
     def test_protected_route_without_auth(self):
-        """Test: Accès route protégée sans authentification"""
+        """Test: Access protected route without authentication"""
         response = self.client.get('/api/protected')
         self.assertEqual(response.status_code, 401)
 
     def test_protected_route_with_auth(self):
-        """Test: Accès route protégée avec authentification"""
+        """Test: Access protected route with authentication"""
         self.login('alice', 'password123')
         response = self.client.get('/api/protected')
         self.assertEqual(response.status_code, 200)
@@ -131,7 +131,7 @@ class SecurityTestCase(unittest.TestCase):
     # ===== TESTS PERMISSIONS =====
 
     def test_access_own_private_note(self):
-        """Test: Accès à sa propre note privée"""
+        """Test: Access own private note"""
         self.login('alice', 'password123')
         response = self.client.get(f'/api/notes/{self.alice_note_id}')
         self.assertEqual(response.status_code, 200)
@@ -139,7 +139,7 @@ class SecurityTestCase(unittest.TestCase):
         self.assertTrue(data['success'])
 
     def test_access_others_private_note(self):
-        """Test: INTERDIT - Accès à la note privée d'un autre utilisateur"""
+        """Test: FORBIDDEN - Access another user's private note"""
         self.login('bob', 'password123')
         response = self.client.get(f'/api/notes/{self.alice_note_id}')
         self.assertEqual(response.status_code, 403)
@@ -148,7 +148,7 @@ class SecurityTestCase(unittest.TestCase):
         self.assertEqual(data['error'], 'Access denied')
 
     def test_access_shared_note_readonly(self):
-        """Test: Accès en lecture à une note partagée"""
+        """Test: Read access to a shared note"""
         self.login('bob', 'password123')
         response = self.client.get(f'/api/notes/{self.shared_note_id}')
         self.assertEqual(response.status_code, 200)
@@ -156,20 +156,20 @@ class SecurityTestCase(unittest.TestCase):
         self.assertTrue(data['success'])
 
     def test_modify_others_note_forbidden(self):
-        """Test: INTERDIT - Modification de la note d'un autre (read-only)"""
+        """Test: FORBIDDEN - Modifying another user's note (read-only)"""
         self.login('bob', 'password123')
         response = self.client.put(f'/api/notes/{self.shared_note_id}',
             data=json.dumps({'title': 'Hacked', 'content': 'Hacked content'}),
             content_type='application/json'
         )
-        # La note est en mode "read" donc Bob ne peut pas modifier
-        # 405 = Method Not Allowed (route PUT non implémentée)
+        # Note is in "read" mode so Bob cannot modify
+        # 405 = Method Not Allowed (PUT route not implemented)
         self.assertIn(response.status_code, [403, 400, 405])
 
     # ===== TESTS XSS PROTECTION =====
 
     def test_xss_in_note_title(self):
-        """Test: Protection XSS dans le titre"""
+        """Test: XSS protection in title"""
         self.login('alice', 'password123')
         xss_payload = "<script>alert('XSS')</script>"
         response = self.client.post('/api/notes',
@@ -182,14 +182,14 @@ class SecurityTestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 201)
         
-        # on vérifie que le script n'est PAS exécuté (frontend doit échapper)
-        # Backend stocke tel quel, frontend doit échapper via escapeHtml()
+        # Check that the script is NOT executed (frontend must escape)
+        # Backend stores as-is, frontend must escape via escapeHtml()
         data = json.loads(response.data)
-        # Le titre est stocké tel quel dans la BD
+        # Title is stored as-is in the database
         self.assertEqual(data['note']['title'], xss_payload)
 
     def test_xss_in_note_content(self):
-        """Test: Protection XSS dans le contenu"""
+        """Test: XSS protection in content"""
         self.login('alice', 'password123')
         xss_payload = "<img src=x onerror=alert('XSS')>"
         response = self.client.post('/api/notes',
@@ -205,24 +205,24 @@ class SecurityTestCase(unittest.TestCase):
     # ===== TESTS SQL INJECTION =====
 
     def test_sql_injection_login(self):
-        """Test: Protection contre injection SQL dans login"""
-        # Tentative classique: admin' OR '1'='1
+        """Test: SQL injection protection in login"""
+        # Classic attempt: admin' OR '1'='1
         response = self.login("admin' OR '1'='1", "anything")
         self.assertEqual(response.status_code, 401)
-        # SQLAlchemy protège automatiquement avec parameterized queries
+        # SQLAlchemy automatically protects with parameterized queries
 
     def test_sql_injection_note_search(self):
-        """Test: Protection injection SQL dans recherche de notes"""
+        """Test: SQL injection protection in note search"""
         self.login('alice', 'password123')
-        # Tentative d'injection dans l'URL
+        # Injection attempt in URL
         response = self.client.get("/api/notes/1' OR '1'='1")
-        # Devrait retourner 404 ou 400, pas exposer toutes les notes
+        # Should return 404 or 400, not expose all notes
         self.assertIn(response.status_code, [404, 400])
 
     # ===== TESTS VALIDATION INPUTS =====
 
     def test_empty_note_title(self):
-        """Test: Rejet note sans titre"""
+        """Test: Reject note without title"""
         self.login('alice', 'password123')
         response = self.client.post('/api/notes',
             data=json.dumps({'title': '', 'content': 'Content', 'visibility': 'private'}),
@@ -231,7 +231,7 @@ class SecurityTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_too_long_title(self):
-        """Test: Rejet titre trop long (>200 caractères)"""
+        """Test: Reject too long title (>200 characters)"""
         self.login('alice', 'password123')
         long_title = 'A' * 201
         response = self.client.post('/api/notes',
@@ -241,7 +241,7 @@ class SecurityTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_too_long_content(self):
-        """Test: Rejet contenu trop long (>10000 caractères)"""
+        """Test: Reject too long content (>10000 characters)"""
         self.login('alice', 'password123')
         long_content = 'A' * 10001
         response = self.client.post('/api/notes',
@@ -251,7 +251,7 @@ class SecurityTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_invalid_visibility(self):
-        """Test: Rejet visibilité invalide"""
+        """Test: Reject invalid visibility"""
         self.login('alice', 'password123')
         response = self.client.post('/api/notes',
             data=json.dumps({'title': 'Title', 'content': 'Content', 'visibility': 'invalid'}),
@@ -259,17 +259,17 @@ class SecurityTestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    # ===== TESTS SECURITE HEADERS =====
+    # ===== TESTS SECURITY HEADERS =====
 
     def test_security_headers_present(self):
-        """Test: Présence des headers de sécurité"""
+        """Test: Presence of security headers"""
         response = self.client.get('/api/protected')
         
-        # X-Frame-Options (protection Clickjacking)
+        # X-Frame-Options (Clickjacking protection)
         self.assertIn('X-Frame-Options', response.headers)
         self.assertEqual(response.headers['X-Frame-Options'], 'SAMEORIGIN')
         
-        # X-Content-Type-Options (protection MIME sniffing)
+        # X-Content-Type-Options (MIME sniffing protection)
         self.assertIn('X-Content-Type-Options', response.headers)
         self.assertEqual(response.headers['X-Content-Type-Options'], 'nosniff')
         
@@ -282,35 +282,35 @@ class SecurityTestCase(unittest.TestCase):
     # ===== TESTS PASSWORD HASHING =====
 
     def test_password_hashed_in_database(self):
-        """Test: Mot de passe haché dans la BD (pas en clair)"""
+        """Test: Password hashed in database (not plaintext)"""
         with self.app.app_context():
             alice = User.query.filter_by(nom='alice').first()
-            # Le mot de passe ne doit PAS être "password123" en clair
+            # Password must NOT be "password123" in plaintext
             self.assertNotEqual(alice.pswd_hashed, 'password123')
-            # Doit ressembler à un hash bcrypt
+            # Must look like a bcrypt hash
             self.assertTrue(alice.pswd_hashed.startswith('$2'))
 
     # ===== TESTS AUTHORIZATION =====
 
     def test_cannot_delete_others_note(self):
-        """Test: INTERDIT - Suppression de la note d'un autre"""
+        """Test: FORBIDDEN - Deleting another user's note"""
         self.login('bob', 'password123')
         response = self.client.delete(f'/api/notes/{self.alice_note_id}')
-        # 405 = Method Not Allowed (route DELETE non implémentée)
+        # 405 = Method Not Allowed (DELETE route not implemented)
         self.assertIn(response.status_code, [403, 404, 405])
 
     def test_list_notes_only_shows_accessible(self):
-        """Test: Liste des notes ne montre que les notes accessibles"""
+        """Test: Note list shows only accessible notes"""
         self.login('bob', 'password123')
         response = self.client.get('/api/notes')
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         
-        # Bob ne doit PAS voir la note privée d'Alice
+        # Bob must NOT see Alice's private note
         note_ids = [note['id'] for note in data['notes']]
         self.assertNotIn(self.alice_note_id, note_ids)
         
-        # Bob DOIT voir la note partagée
+        # Bob MUST see the shared note
         self.assertIn(self.shared_note_id, note_ids)
 
 
@@ -384,14 +384,14 @@ class SecurityTestCase(unittest.TestCase):
         """Test: INTERDIT - Lock sur note read-only"""
         with self.app.app_context():
             from models.note import Note
-            # Créer note read-only
+            # Create read-only note
             readonly_note = Note(owner_id=self.alice_id, title="Read-only", content="Test", visibility="read")
             from models import db
             db.session.add(readonly_note)
             db.session.commit()
             readonly_note_id = readonly_note.id
         
-        # Bob tente d'acquérir lock sur note read-only
+        # Bob attempts to acquire lock on read-only note
         self.login('bob', 'password123')
         response = self.client.post(f'/api/notes/{readonly_note_id}/lock')
         self.assertEqual(response.status_code, 409)
@@ -401,5 +401,5 @@ class SecurityTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # Lancer les tests
+    # Run tests
     unittest.main(verbosity=2)
